@@ -1,0 +1,31 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.ttProject</groupId>
+    <artifactId>myLib.m2eHelper</artifactId>
+    <version>0.0.1</version>
+  </parent>
+  <groupId>com.ttProject.jcaster</groupId>
+  <artifactId>JCasterProject</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <name>JCasterProject</name>
+  <description>JCasterのプロジェクトの親</description>
+  <modules>
+    <module>JCaster.Plugin</module>
+    <module>JCaster</module>
+    
+    <module>ConsoleViewer</module>
+    <module>Mp4ReaderPlugin</module>
+    <module>NoMixerPlugin</module>
+    <module>FlvSavePlugin</module>
+    <module>RtmpPublishPlugin</module>
+  </modules>
+  <dependencies>
+    <dependency>
+      <groupId>com.ttProject</groupId>
+      <artifactId>myLib.media.flv</artifactId>
+      <version>0.0.2-SNAPSHOT</version>
+    </dependency>
+  </dependencies>
+</project>
