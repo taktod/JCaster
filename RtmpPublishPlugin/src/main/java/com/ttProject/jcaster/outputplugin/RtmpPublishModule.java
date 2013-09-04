@@ -49,7 +49,6 @@ public class RtmpPublishModule implements IOutputModule, ActionListener {
 	 */
 	@Override
 	public void onTimerEvent() {
-
 	}
 	/**
 	 * データが転送されてきたときの動作

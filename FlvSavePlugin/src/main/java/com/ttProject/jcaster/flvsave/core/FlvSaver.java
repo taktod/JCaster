@@ -108,4 +108,7 @@ public class FlvSaver {
 			channel = null;
 		}
 	}
+	public int getSavePos() {
+		return savePos;
+	}
 }

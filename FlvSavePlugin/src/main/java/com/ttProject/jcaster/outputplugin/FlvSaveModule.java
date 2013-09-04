@@ -6,6 +6,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.TimeZone;
 
 import javax.swing.JButton;
@@ -86,14 +87,16 @@ public class FlvSaveModule implements IOutputModule, ActionListener, KeyListener
 	}
 	@Override
 	public void onTimerEvent() {
-
+		if(saver != null) {
+			posInfoLabel.setText(format.format(new Date(saver.getSavePos())));
+		}
 	}
 	/**
 	 * mixerで変換されたデータを受け入れる。
 	 */
 	@Override
 	public void setMixedData(Tag tag) {
-		logger.info("受け入れTag:" + tag);
+//		logger.info("受け入れTag:" + tag);
 		if(tag instanceof AudioTag) {
 			AudioTag aTag = (AudioTag) tag;
 			if(aTag.getCodec() == CodecType.AAC && aTag.isMediaSequenceHeader()) {
