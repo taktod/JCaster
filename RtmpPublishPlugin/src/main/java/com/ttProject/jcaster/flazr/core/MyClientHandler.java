@@ -9,6 +9,7 @@ import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelStateEvent;
+import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.MessageEvent;
 
 import com.flazr.rtmp.RtmpMessage;
@@ -16,6 +17,7 @@ import com.flazr.rtmp.client.ClientHandler;
 import com.flazr.rtmp.client.ClientOptions;
 import com.flazr.rtmp.message.Command;
 import com.flazr.rtmp.message.Control;
+import com.ttProject.jcaster.flazr.core.RtmpSender.Event;
 
 /**
  * クライアントハンドラー動作
@@ -28,6 +30,9 @@ public class MyClientHandler extends ClientHandler {
 	private int transactionId = 1;
 	private Map<Integer, String> transactionToCommandMap;
 	private int streamId = 0;
+	public int getStreamId() {
+		return streamId;
+	}
 	private Channel channel;
 	private RtmpSender sender; // publisherのかわり。
 	/**
@@ -61,6 +66,10 @@ public class MyClientHandler extends ClientHandler {
 	@Override
 	public void messageReceived(ChannelHandlerContext ctx, MessageEvent me) {
 		channel = me.getChannel();
+		if(sender != null && sender.handle(me)) {
+			// senderがしょりすべきデータだったので、そちらで処理されました。
+			return;
+		}
 		if(!(me.getMessage() instanceof RtmpMessage)) {
 			logger.info("メッセージがrtmpMessageではないので、myClientHandlerで処理しません。");
 			return;
@@ -113,6 +122,7 @@ public class MyClientHandler extends ClientHandler {
 					logger.info("publish");
 					// senderの動作をstartさせる必要あり。
 					// こっちでもsenderを開始する必要あり。
+					sender.onPublished(channel);
 					return;
 				}
 				else if("NetStream.Unpublish.Success".equals(code)) {
@@ -144,12 +154,12 @@ public class MyClientHandler extends ClientHandler {
 	public void close() {
 		channel.close();
 	}
+	public void fireMessageReceived(Event data) {
+		Channels.fireMessageReceived(channel, data);
+	}
 	public void publish() {
 		// publishを実行する。これがうけいれられたら今後はメッセージの送信を実行することができる。
 		// rtmpPublisher側でもやることはあるっぽい。
 		channel.write(Command.publish(streamId, options));
-	}
-	public void unpublish() {
-		// 本当はメッセージを発行する必要がありそうだ。(やるのはここではなくて、rtmpSenderか？)
 	}
 }

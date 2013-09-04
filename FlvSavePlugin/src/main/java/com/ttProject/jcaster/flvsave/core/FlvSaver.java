@@ -13,6 +13,7 @@ import com.ttProject.media.flv.tag.VideoTag;
  * flvの保存用動作
  * @author taktod
  * saverはデータを順次うけいれていって、ファイルに落とし込む。
+ * この方式だと、中途でやめたあとに、再開したときに、再開後にmshheaderがこなければ、アウトになりそう。
  */
 public class FlvSaver {
 	/** ロガー */

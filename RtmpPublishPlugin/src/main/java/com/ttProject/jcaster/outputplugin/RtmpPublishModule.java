@@ -56,7 +56,7 @@ public class RtmpPublishModule implements IOutputModule, ActionListener {
 	 */
 	@Override
 	public void setMixedData(Tag tag) {
-
+		sender.send(tag);
 	}
 	/**
 	 * 構築をすすめておく。
@@ -110,7 +110,7 @@ public class RtmpPublishModule implements IOutputModule, ActionListener {
 		}
 		if("close".equals(e.getActionCommand())) {
 			logger.info("closeがおされました。");
-			sender.stop();
+			sender.close();
 			publishButton.setText("publish");
 			publishButton.setEnabled(false);
 			urlField.setEnabled(true);
