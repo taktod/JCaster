@@ -14,7 +14,10 @@ import com.ttProject.jcaster.flazr.core.RtmpSender;
 import com.ttProject.jcaster.plugin.base.BaseHandler;
 import com.ttProject.jcaster.plugin.base.ISwingMainBase;
 import com.ttProject.jcaster.plugin.module.IOutputModule;
+import com.ttProject.media.flv.CodecType;
 import com.ttProject.media.flv.Tag;
+import com.ttProject.media.flv.tag.AudioTag;
+import com.ttProject.media.flv.tag.VideoTag;
 import com.ttProject.swing.component.GroupLayoutEx;
 import com.ttProject.swing.component.JPlaceholderTextField;
 
@@ -30,6 +33,8 @@ public class RtmpPublishModule implements IOutputModule, ActionListener {
 	private JPlaceholderTextField nameField;
 	private JButton connectButton;
 	private JButton publishButton;
+	private AudioTag audioMshTag = null;
+	private VideoTag videoMshTag = null;
 	/**
 	 * コンストラクタ
 	 */
@@ -55,7 +60,32 @@ public class RtmpPublishModule implements IOutputModule, ActionListener {
 	 */
 	@Override
 	public void setMixedData(Tag tag) {
-		sender.send(tag);
+		if(tag instanceof AudioTag) {
+			AudioTag aTag = (AudioTag) tag;
+			if(aTag.getCodec() == CodecType.AAC && aTag.isMediaSequenceHeader()) {
+				audioMshTag = aTag;
+			}
+			else if(aTag.getCodec() != CodecType.AAC) {
+				audioMshTag = null;
+			}
+		}
+		if(tag instanceof VideoTag) {
+			VideoTag vTag = (VideoTag) tag;
+			if(vTag.getCodec() == CodecType.AVC && vTag.isMediaSequenceHeader()) {
+				videoMshTag = vTag;
+			}
+			else if(vTag.getCodec() != CodecType.AVC) {
+				videoMshTag = null;
+			}
+		}
+		if(sender != null) {
+			try {
+				sender.send(tag);
+			}
+			catch (Exception e) {
+				logger.error("エラーが発生しました。", e);
+			}
+		}
 	}
 	/**
 	 * 構築をすすめておく。
@@ -98,6 +128,8 @@ public class RtmpPublishModule implements IOutputModule, ActionListener {
 			sender = new RtmpSender(urlField.getText(), nameField.getText());
 			try {
 				sender.open();
+				sender.send(audioMshTag);
+				sender.send(videoMshTag);
 				connectButton.setText("close");
 				urlField.setEnabled(false);
 				nameField.setEnabled(false);
@@ -109,7 +141,7 @@ public class RtmpPublishModule implements IOutputModule, ActionListener {
 		}
 		if("close".equals(e.getActionCommand())) {
 			logger.info("closeがおされました。");
-			sender.close();
+			sender.stop();
 			publishButton.setText("publish");
 			publishButton.setEnabled(false);
 			urlField.setEnabled(true);
