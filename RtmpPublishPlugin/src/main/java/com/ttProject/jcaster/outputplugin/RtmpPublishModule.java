@@ -111,7 +111,7 @@ public class RtmpPublishModule implements IOutputModule, ActionListener {
 				{new JLabel("Output"), mainbase.getComboBox(getClass())},
 				{new JLabel("Url"), urlField},
 				{new JLabel("Name"), new JComponent[]{nameField, new JLabel()}},
-				{new JPanel(), new JComponent[]{connectButton, publishButton}}
+				{new JLabel(), new JComponent[]{connectButton, publishButton}}
 		};
 		layout.addComponents(components);
 		panel.validate();
@@ -125,11 +125,11 @@ public class RtmpPublishModule implements IOutputModule, ActionListener {
 		if("connect".equals(e.getActionCommand())) {
 			logger.info("コネクトがおされました。");
 			// rtmpの接続を開始します。
-			sender = new RtmpSender(urlField.getText(), nameField.getText());
+			sender = new RtmpSender(urlField.getText(), nameField.getText(), this);
 			try {
 				sender.open();
-				sender.send(audioMshTag);
-				sender.send(videoMshTag);
+//				sender.send(audioMshTag);
+//				sender.send(videoMshTag);
 				connectButton.setText("close");
 				urlField.setEnabled(false);
 				nameField.setEnabled(false);
@@ -157,6 +157,12 @@ public class RtmpPublishModule implements IOutputModule, ActionListener {
 			logger.info("unpublishがおされました。");
 			sender.unpublish();
 			publishButton.setText("publish");
+		}
+	}
+	public void requestMshData() throws Exception {
+		if(sender != null) {
+			sender.send(audioMshTag);
+			sender.send(videoMshTag);
 		}
 	}
 }

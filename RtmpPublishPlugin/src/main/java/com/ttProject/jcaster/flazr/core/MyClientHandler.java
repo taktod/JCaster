@@ -2,6 +2,7 @@ package com.ttProject.jcaster.flazr.core;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 import org.jboss.netty.channel.Channel;
@@ -10,6 +11,10 @@ import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.MessageEvent;
+import org.jboss.netty.util.HashedWheelTimer;
+import org.jboss.netty.util.Timeout;
+import org.jboss.netty.util.Timer;
+import org.jboss.netty.util.TimerTask;
 
 import com.flazr.rtmp.RtmpMessage;
 import com.flazr.rtmp.RtmpPublisher;
@@ -35,6 +40,7 @@ public class MyClientHandler extends ClientHandler {
 
 	private Channel channel = null;
 	private Thread thread = null;
+	private Timer timer = new HashedWheelTimer(10, TimeUnit.MILLISECONDS);
 	/**
 	 * コンストラクタ
 	 * @param options
@@ -48,9 +54,33 @@ public class MyClientHandler extends ClientHandler {
 		if(options.getPublishType() != null) {
 			RtmpReader reader = options.getReaderToPublish();
 			publisher = new RtmpPublisher(reader, streamId, options.getBuffer(), false, false) {
+				private int counter = 0;
 				@Override
 				protected RtmpMessage[] getStopMessages(long paramLong) {
 					return new RtmpMessage[]{Command.unpublish(streamId)};
+				}
+				/**
+				 * 次の処理にすすめる。
+				 * TODO timerをはさんで動作をさせないと、固まることがあるみたいです。
+				 * よって10ミリ秒だけ強制的にはさむようにしました。
+				 * ただし、superのfireNextが呼べないので、適当な関数を挟むようにしました。かっこわるいね。
+				 */
+				public void fireNext(final Channel channel, final long delay) {
+					counter ++;
+					if(counter > 10) {
+						timer.newTimeout(new TimerTask() {
+							@Override
+							public void run(Timeout timeout) throws Exception {
+								fireNext2(channel, delay);
+							}
+						}, 10, TimeUnit.MILLISECONDS);
+					}
+					else {
+						super.fireNext(channel, delay);
+					}
+				};
+				private void fireNext2(final Channel channel, final long delay) {
+					super.fireNext(channel, delay);
 				}
 			};
 			channel.write(Command.publish(streamId, options));
@@ -60,9 +90,6 @@ public class MyClientHandler extends ClientHandler {
 		if(thread != null) {
 			thread.interrupt();
 		}
-		publisher = null;
-		thread = null;
-		channel = null;
 	}
 	private void writeCommandExpectingResult(Channel channel, Command command) {
 		final int id = transactionId ++;
@@ -77,6 +104,7 @@ public class MyClientHandler extends ClientHandler {
 	@Override
 	public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e)
 			throws Exception {
+		super.channelClosed(ctx, e);
 		if(publisher != null) {
 			publisher.close();
 		}
@@ -84,7 +112,9 @@ public class MyClientHandler extends ClientHandler {
 			RtmpReader reader = options.getReaderToPublish();
 			reader.close();
 		}
-		super.channelClosed(ctx, e);
+		publisher = null;
+		thread = null;
+		channel = null;
 	}
 	@Override
 	public void messageReceived(ChannelHandlerContext ctx, MessageEvent me) {
@@ -99,7 +129,6 @@ public class MyClientHandler extends ClientHandler {
 			return;
 		}
 		final RtmpMessage message = (RtmpMessage) me.getMessage();
-		logger.info("messageType:" + message.getHeader().getMessageType());
 		switch(message.getHeader().getMessageType()) {
 		case CONTROL:
 			Control control = (Control)message;

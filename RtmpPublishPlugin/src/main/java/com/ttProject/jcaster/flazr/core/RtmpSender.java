@@ -26,6 +26,7 @@ import com.flazr.rtmp.client.ClientOptions;
 import com.flazr.rtmp.message.Metadata;
 import com.flazr.rtmp.message.MetadataAmf0;
 import com.ttProject.flazr.TagManager;
+import com.ttProject.jcaster.outputplugin.RtmpPublishModule;
 import com.ttProject.media.flv.CodecType;
 import com.ttProject.media.flv.Tag;
 import com.ttProject.media.flv.tag.AudioTag;
@@ -38,6 +39,7 @@ import com.ttProject.media.flv.tag.VideoTag;
 public class RtmpSender implements RtmpReader {
 	/** ロガー */
 	private final Logger logger = Logger.getLogger(RtmpSender.class);
+	private final RtmpPublishModule module;
 	
 	private final LinkedBlockingQueue<FlvAtom> dataQueue = new LinkedBlockingQueue<FlvAtom>();
 	private Metadata metadata = new MetadataAmf0("onMetaData");
@@ -52,6 +54,7 @@ public class RtmpSender implements RtmpReader {
 	private ClientOptions options = null;
 	private MyClientHandler clientHandler = null;
 	private boolean isWorking = true;
+	private boolean isPublishing = false;
 	
 	// mediaSequenceHeaderをとっておくのも重要だが、timestampの調整も実施する必要あり。
 	private AudioTag audioMshTag = null;
@@ -65,9 +68,10 @@ public class RtmpSender implements RtmpReader {
 	 * @param rtmpAdderss
 	 * @param streamName
 	 */
-	public RtmpSender(String rtmpAdderss, String streamName) {
+	public RtmpSender(String rtmpAdderss, String streamName, RtmpPublishModule module) {
 		this.rtmpAddress = rtmpAdderss;
 		this.streamName = streamName;
+		this.module = module;
 	}
 	/**
 	 * 接続を開きます。
@@ -81,7 +85,32 @@ public class RtmpSender implements RtmpReader {
 		options.setFileToPublish(null);
 		options.setReaderToPublish(this);
 		
-		connect(options);
+		Thread t = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				while(isWorking) {
+					try {
+						// 保持queueのデータをいったんクリアします。
+						dataQueue.clear();
+						audioMshTag = null;
+						videoMshTag = null;
+						processPos = -1;
+						savePos = 0;
+						module.requestMshData();
+					}
+					catch (Exception e) {
+					}
+					connect(options);
+					logger.info("接続おわった。");
+				}
+				// 切断がおわってから呼ばれる停止処理
+				// 切断が外部からよばれている場合は止める。
+				// そうでないなら、再接続しておく。
+				logger.info("真・停止");
+			}
+		});
+		t.setDaemon(true);
+		t.start();
 	}
 	private void connect(final ClientOptions options) {
 		bootstrap = getBootstrap(Executors.newCachedThreadPool(), options);
@@ -93,6 +122,9 @@ public class RtmpSender implements RtmpReader {
 		else {
 			logger.info("接続しました。");
 		}
+		// これやっちゃうと・・・他の処理がしにそうな気がするけど・・・
+		future.getChannel().getCloseFuture().awaitUninterruptibly(); 
+		bootstrap.getFactory().releaseExternalResources();
 	}
 	private ClientBootstrap getBootstrap(final Executor executor, final ClientOptions options) {
 		final ChannelFactory factory = new NioClientSocketChannelFactory(executor, executor);
@@ -140,9 +172,11 @@ public class RtmpSender implements RtmpReader {
 //		streamName = name;
 	}
 	public void publish() {
+		isPublishing = true;
 		clientHandler.publish();
 	}
 	public void unpublish() {
+		isPublishing = false;
 		// TODO 一度unpublishしてから再度publishさせたかったら、dataQueueの内容をクリアしたり、前のmshデータを復帰させたりという動作が必要になる。
 		clientHandler.unpublish();
 	}
@@ -155,22 +189,6 @@ public class RtmpSender implements RtmpReader {
 	}
 	@Override
 	public void close() {
-		if(isWorking) {
-			// これじゃなくて、別のイベントで実行すべきといっている。
-			Thread t = new Thread(new Runnable() {
-				@Override
-				public void run() {
-					connect(options);
-				}
-			});
-			t.setDaemon(true);
-			t.start();
-			return;
-		}
-		// 切断がおわってから呼ばれる停止処理
-		// 切断が外部からよばれている場合は止める。
-		// そうでないなら、再接続しておく。
-		logger.info("真・停止");
 	}
 	@Override
 	public Metadata getMetadata() {
@@ -192,10 +210,15 @@ public class RtmpSender implements RtmpReader {
 	@Override
 	public RtmpMessage next() {
 		if(aggregateDuration <= 0) {
+			if(!isPublishing || !isWorking) {
+				return null;
+			}
 			try {
-				return dataQueue.take();
+				FlvAtom atom = dataQueue.take();
+				return atom;
 			}
 			catch (Exception e) {
+				e.printStackTrace();
 				return null;
 			}
 		}
@@ -210,6 +233,7 @@ public class RtmpSender implements RtmpReader {
 	}
 	@Override
 	public void setAggregateDuration(int targetDuration) {
+//		logger.info("aggregateDurationをセットします。" + targetDuration);
 		aggregateDuration = targetDuration;
 	}
 	/**
@@ -241,6 +265,9 @@ public class RtmpSender implements RtmpReader {
 				videoMshTag = null;
 			}
 		}
+		if(!isPublishing) {
+			return;
+		}
 		// データを登録する
 		if(processPos == -1) {
 			// 始めのデータである場合
@@ -259,8 +286,10 @@ public class RtmpSender implements RtmpReader {
 		}
 		// 時間の調整を実施する。
 		tag.setTimestamp(savePos);
+//		logger.info(tag);
 		if(tag instanceof AudioTag) {
 			if(audioMshTag != null) {
+				logger.info("mshをおくります。audio");
 				audioMshTag.setTimestamp(tag.getTimestamp());
 				dataQueue.add(manager.getAtom(audioMshTag));
 				audioMshTag = null;
@@ -268,6 +297,7 @@ public class RtmpSender implements RtmpReader {
 		}
 		if(tag instanceof VideoTag) {
 			if(videoMshTag != null) {
+				logger.info("mshをおくります。video");
 				videoMshTag.setTimestamp(tag.getTimestamp());
 				dataQueue.add(manager.getAtom(videoMshTag));
 				videoMshTag = null;
