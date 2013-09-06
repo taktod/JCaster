@@ -188,7 +188,7 @@ public class Mp4ReaderModule implements IInputModule, ActionListener, KeyListene
 	@Override
 	public void stateChanged(ChangeEvent e) {
 		if(!positionSlider.getValueIsAdjusting()) {
-			logger.info(((JSlider)e.getSource()).getValue());
+//			logger.info(((JSlider)e.getSource()).getValue());
 			// sliderが変更になった場合は、再生を止める必要があります。
 		}
 		// 位置がかわったら、posTextの表示変更
