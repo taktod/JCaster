@@ -88,7 +88,7 @@ public class Mp4Feeder {
 	public void initialize() throws Exception {
 		// indexファイルの解析を実行する。
 		File file = new File(target);
-		tmpFile = new TmpFile(file.getName() + "_" + System.currentTimeMillis() + ".tmp");
+		tmpFile = new TmpFile("/" + file.getName() + "_" + System.currentTimeMillis() + ".tmp");
 		IndexFileCreator analyzer = new IndexFileCreator(tmpFile);
 		Atom atom = null;
 		while((atom = analyzer.analyze(source)) != null) {
