@@ -28,11 +28,14 @@ import com.ttProject.swing.component.JPlaceholderTextField;
 public class RtmpPublishModule implements IOutputModule, ActionListener {
 	/** ロガー */
 	private static final Logger logger = Logger.getLogger(RtmpPublishModule.class);
+	/** 送信動作部 */
 	private RtmpSender sender = null;
+	/** GUI設定(swing) */
 	private JPlaceholderTextField urlField;
 	private JPlaceholderTextField nameField;
 	private JButton connectButton;
 	private JButton publishButton;
+	/** flvのmshTag保持動作 */
 	private AudioTag audioMshTag = null;
 	private VideoTag videoMshTag = null;
 	/**
@@ -100,6 +103,10 @@ public class RtmpPublishModule implements IOutputModule, ActionListener {
 			mainbase.registerModule(this);
 		}
 	}
+	/**
+	 * swing用のセットアップ処理
+	 * @param mainbase
+	 */
 	private void setupSwingComponent(ISwingMainBase mainbase) {
 		JPanel panel = mainbase.getComponentPanel(getClass());
 		panel.removeAll();

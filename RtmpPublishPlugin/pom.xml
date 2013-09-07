@@ -7,7 +7,8 @@
   </parent>
   <artifactId>RtmpPublishPlugin</artifactId>
   <name>RtmpPublishPlugin</name>
-  <description>rtmpとしてデータを送信するプラグイン</description>
+  <description>rtmpとしてデータを送信するプラグイン
+mixerモジュールからflvTagの状態でデータをうけとって、処理します。</description>
   <dependencies>
     <dependency>
       <groupId>com.ttProject</groupId>

@@ -39,28 +39,39 @@ import com.ttProject.media.flv.tag.VideoTag;
 public class RtmpSender implements RtmpReader {
 	/** ロガー */
 	private final Logger logger = Logger.getLogger(RtmpSender.class);
+	/** 親モジュール参照 */
 	private final RtmpPublishModule module;
-	
+	/** 配信用のスレッドに渡すデータ保持 */
 	private final LinkedBlockingQueue<FlvAtom> dataQueue = new LinkedBlockingQueue<FlvAtom>();
+	/** デフォルトのメタデータ */
 	private Metadata metadata = new MetadataAmf0("onMetaData");
+	/** 集合メッセージ用の設定保持(常に0期待) */
 	private int aggregateDuration = 0;
 
-	private final String rtmpAddress; // こっちは一度つくったら変更不可(接続先の変更になるため、やり直す必要あり。)
+	/** 接続サーバーアドレス */
+	private final String rtmpAddress;
+	/** アドレス解析用 */
 	private static final Pattern pattern = Pattern.compile("^rtmp://([^/:]+)(:[0-9]+)?/(.*)(.*?)$");
 
+	/** 接続処理用 */
 	private ClientBootstrap bootstrap = null;
 	private ChannelFuture future = null;
 	private ClientOptions options = null;
 	private MyClientHandler clientHandler = null;
+	/** 接続中フラグ */
 	private boolean isWorking = true;
+	/** 放送中フラグ */
 	private boolean isPublishing = false;
 	
-	// mediaSequenceHeaderをとっておくのも重要だが、timestampの調整も実施する必要あり。
+	/** msh用のタグ */
 	private AudioTag audioMshTag = null;
 	private VideoTag videoMshTag = null;
+	/** 入力データの処理位置 */
 	private int processPos = -1;
+	/** 現在の処理位置 */
 	private int savePos = 0;
-	
+
+	/** flvTag→flvAtomの変換補助 */
 	private final TagManager manager = new TagManager();
 	/**
 	 * コンストラクタ
@@ -81,10 +92,12 @@ public class RtmpSender implements RtmpReader {
 		options.publishLive();
 		options.setFileToPublish(null);
 		options.setReaderToPublish(this);
-		
+
+		// 接続を開始します。blockしてしまうので別threadにやらせます。
 		Thread t = new Thread(new Runnable() {
 			@Override
 			public void run() {
+				// フラグがついている場合はとまっても再接続します。
 				while(isWorking) {
 					try {
 						// 保持queueのデータをいったんクリアします。
@@ -97,18 +110,20 @@ public class RtmpSender implements RtmpReader {
 					}
 					catch (Exception e) {
 					}
-					connect(options);
+					connect(options); // ここでブロックが発生
 					logger.info("接続おわった。");
 				}
-				// 切断がおわってから呼ばれる停止処理
-				// 切断が外部からよばれている場合は止める。
-				// そうでないなら、再接続しておく。
 				logger.info("真・停止");
+				// おわったときになにか解放処理をしたい場合はここで何ぞすればよい。
 			}
 		});
 		t.setDaemon(true);
 		t.start();
 	}
+	/**
+	 * 接続処理
+	 * @param options
+	 */
 	private void connect(final ClientOptions options) {
 		bootstrap = getBootstrap(Executors.newCachedThreadPool(), options);
 		future = bootstrap.connect(new InetSocketAddress(options.getHost(), options.getPort()));
@@ -123,6 +138,12 @@ public class RtmpSender implements RtmpReader {
 		future.getChannel().getCloseFuture().awaitUninterruptibly(); 
 		bootstrap.getFactory().releaseExternalResources();
 	}
+	/**
+	 * bootstrapの作成処理
+	 * @param executor
+	 * @param options
+	 * @return
+	 */
 	private ClientBootstrap getBootstrap(final Executor executor, final ClientOptions options) {
 		final ChannelFactory factory = new NioClientSocketChannelFactory(executor, executor);
 		final ClientBootstrap bootstrap = new ClientBootstrap(factory);
@@ -165,14 +186,19 @@ public class RtmpSender implements RtmpReader {
 		}
 		options.setAppName(matcher.group(3));
 	}
+	/**
+	 * 放送を開始
+	 */
 	public void publish() {
 		options.setStreamName(module.getStreamName());
 		isPublishing = true;
 		clientHandler.publish();
 	}
+	/**
+	 * 放送を中断
+	 */
 	public void unpublish() {
 		isPublishing = false;
-		// TODO 一度unpublishしてから再度publishさせたかったら、dataQueueの内容をクリアしたり、前のmshデータを復帰させたりという動作が必要になる。
 		clientHandler.unpublish();
 	}
 	/**
@@ -182,26 +208,49 @@ public class RtmpSender implements RtmpReader {
 		isWorking = false;
 		future.getChannel().close();
 	}
+	/**
+	 * 停止処理
+	 * いまのところ特にすることなし。
+	 * なお、publishしていない場合に停止したら呼ばれないのでここで処理はせず。connectのおわりの部分で処理をすべき
+	 */
 	@Override
 	public void close() {
 	}
+	/**
+	 * metaデータ取得
+	 */
 	@Override
 	public Metadata getMetadata() {
 		return metadata;
 	}
+	/**
+	 * 開始時に送信するメッセージ
+	 */
 	@Override
 	public RtmpMessage[] getStartMessages() {
 		return new RtmpMessage[]{metadata};
 	}
+	/**
+	 * 再生位置を取得
+	 * seekがらみなので禁止
+	 */
 	@Override
 	@Deprecated
 	public long getTimePosition() {
 		throw new RuntimeException("ライブだからseekは禁止だって");
 	}
+	/**
+	 * 次のメッセージが存在しているか判定
+	 * liveで常にあることにします。(なお転送がなくなってもqueueのtake処理でblockかかります。)
+	 */
 	@Override
 	public boolean hasNext() {
 		return true;
 	}
+	/**
+	 * publisherから次のデータが要求されたときの動作
+	 * nullを応答するとunpublishになるようになっています。
+	 */
 	@Override
 	public RtmpMessage next() {
 		if(aggregateDuration <= 0) {
@@ -221,11 +270,18 @@ public class RtmpSender implements RtmpReader {
 			throw new RuntimeException("aggregateによるchunk転送は未実装です。");
 		}
 	}
+	/**
+	 * シーク動作
+	 * 禁止(っていうか入力モジュールでの送信時にコントロールすればよい。)
+	 */
 	@Override
 	@Deprecated
 	public long seek(long paramLong) {
 		throw new RuntimeException("seekは禁止");
 	}
+	/**
+	 * 集合メッセージ用のデータ設置処理(0がくることを想定しています。)
+	 */
 	@Override
 	public void setAggregateDuration(int targetDuration) {
 //		logger.info("aggregateDurationをセットします。" + targetDuration);
@@ -281,7 +337,6 @@ public class RtmpSender implements RtmpReader {
 		}
 		// 時間の調整を実施する。
 		tag.setTimestamp(savePos);
-//		logger.info(tag);
 		if(tag instanceof AudioTag) {
 			if(audioMshTag != null) {
 				logger.info("mshをおくります。audio");
