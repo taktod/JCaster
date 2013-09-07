@@ -7,7 +7,9 @@
   </parent>
   <artifactId>NoMixerPlugin</artifactId>
   <name>NoMixerPlugin</name>
-  <description>なにもせずそのままFlvTagを受け流すMixerPlugin</description>
+  <description>なにもせずそのままFlvTagを受け流すMixerPlugin
+とりあえず入力プラグインの出力がflvTagになっていたらなにもせずに出力プラグインに受け渡せる
+flvTagでなかったら、処理させません。</description>
   <dependencies>
     <dependency>
       <groupId>com.ttProject.jcaster</groupId>

@@ -24,9 +24,12 @@ public class NoMixerModule implements IMixerModule {
 	/** 動作ロガー */
 	private final Logger logger = Logger.getLogger(NoMixerModule.class);
 
+	/** mediaSequenceHeaderの保持(あたらしく接続する出力モジュールが変更になったときに送る必要がある。) */
 	private VideoTag videoMshTag = null;
 	private AudioTag audioMshTag = null;
+	/** 経過時刻 */
 	private int passedTime;
+	/** 受け渡しを実行する出力モジュール */
 	private IOutputModule targetModule;
 	/**
 	 * セットアップ
@@ -103,6 +106,9 @@ public class NoMixerModule implements IMixerModule {
 			// flvデータではないので、受け入れられません。
 		}
 	}
+	/**
+	 * 出力モジュールを設定する
+	 */
 	@Override
 	public void registerOutputModule(IOutputModule outputModule) {
 		targetModule = outputModule;
