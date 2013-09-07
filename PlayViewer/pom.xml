@@ -1,0 +1,40 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.ttProject.jcaster</groupId>
+    <artifactId>JCasterProject</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+  </parent>
+  <artifactId>PlayViewer</artifactId>
+  <name>PlayViewer</name>
+  <description>再生中の動画を表示する表示プラグイン
+GPLになります。</description>
+  <repositories>
+    <repository>
+      <id>xuggle repo</id>
+      <url>http://xuggle.googlecode.com/svn/trunk/repo/share/java/</url>
+    </repository>
+  </repositories>
+  <dependencies>
+    <dependency>
+      <groupId>xuggle</groupId>
+      <artifactId>xuggle-xuggler</artifactId>
+      <version>5.4</version>
+    </dependency>
+    <dependency>
+      <groupId>com.ttProject.jcaster</groupId>
+      <artifactId>JCaster.Plugin</artifactId>
+      <version>0.0.1-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>com.ttProject</groupId>
+      <artifactId>myLib.media.h264</artifactId>
+      <version>0.0.2-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>com.ttProject</groupId>
+      <artifactId>myLib.media.aac</artifactId>
+      <version>0.0.2-SNAPSHOT</version>
+    </dependency>
+  </dependencies>
+</project>

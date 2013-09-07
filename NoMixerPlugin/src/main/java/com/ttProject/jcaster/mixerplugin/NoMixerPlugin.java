@@ -11,6 +11,8 @@ import com.ttProject.jcaster.plugin.IPlugin;
 public class NoMixerPlugin implements IPlugin {
 	/** ロガー */
 	private Logger logger = Logger.getLogger(NoMixerPlugin.class);
+	/** 動作主体モジュール */
+	private NoMixerModule module = new NoMixerModule();
 	/**
 	 * バージョン
 	 */
@@ -31,7 +33,6 @@ public class NoMixerPlugin implements IPlugin {
 	@Override
 	public void onActivated() {
 		logger.info("nomixerPluginがactivateされました。");
-		NoMixerModule module = new NoMixerModule();
 		module.setup();
 	}
 	/**

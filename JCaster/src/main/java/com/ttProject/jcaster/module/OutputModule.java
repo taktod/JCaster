@@ -17,7 +17,7 @@ public class OutputModule implements IOutputModule {
 	/** 通常のoutputModule */
 	private IOutputModule outputModule;
 	/** viewerでうけとりたい場合のoutputModule */
-	private Set<IOutputModule> outputModules = new HashSet<IOutputModule>();
+	private Set<IOutputModule> viewerModules = new HashSet<IOutputModule>();
 	private AudioTag audioMshTag = null;
 	private VideoTag videoMshTag = null;
 	private int lastTimestamp = 0;
@@ -36,6 +36,20 @@ public class OutputModule implements IOutputModule {
 		if(outputModule == module) {
 			outputModule = null;
 		}
+	}
+	public void setViewerModule(IOutputModule module) {
+		viewerModules.add(module);
+		if(audioMshTag != null) {
+			audioMshTag.setTimestamp(lastTimestamp);
+			module.setMixedData(audioMshTag);
+		}
+		if(videoMshTag != null) {
+			videoMshTag.setTimestamp(lastTimestamp);
+			module.setMixedData(videoMshTag);
+		}
+	}
+	public void removeViewerModule(IOutputModule module) {
+		viewerModules.remove(module);
 	}
 	@Override
 	public void onTimerEvent() {
@@ -68,6 +82,9 @@ public class OutputModule implements IOutputModule {
 		lastTimestamp = tag.getTimestamp();
 		if(outputModule != null) {
 			outputModule.setMixedData(tag);
+		}
+		for(IOutputModule module : viewerModules) {
+			module.setMixedData(tag);
 		}
 	}
 }

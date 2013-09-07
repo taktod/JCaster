@@ -41,7 +41,7 @@ public class NoMixerModule implements IMixerModule {
 	 * swingのコンポーネントを構築します。
 	 * @param mainbase
 	 */
-	public void setupSwingComponent(ISwingMainBase mainbase) {
+	private void setupSwingComponent(ISwingMainBase mainbase) {
 		JPanel panel = mainbase.getComponentPanel(getClass());
 		panel.removeAll();
 		GroupLayoutEx layout = new GroupLayoutEx(panel);

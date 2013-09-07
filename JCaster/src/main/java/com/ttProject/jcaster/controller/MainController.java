@@ -7,6 +7,8 @@ import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
 
 import org.apache.log4j.Logger;
 
@@ -73,13 +75,26 @@ public class MainController extends Base implements ISwingMainBase {
 	public void setupViewerModule(JTabbedPane pane) {
 		logger.info("viewer用のtabPaneの構築を実施します。");
 		// viewerのPluginの設定をつくっていく。
-		for(IPlugin plugin : pluginModel.getPlugins()) {
+		for(final IPlugin plugin : pluginModel.getPlugins()) {
 			logger.info("処理plugin:" + plugin.toString());
 			if(plugin.getType() == Type.Viewer || plugin instanceof IViewerPlugin) {
 				IViewerPlugin vPlugin = (IViewerPlugin)plugin;
 				JPanel panel = new JPanel();
 				vPlugin.setViewerPanel(panel);
 				pane.addTab(vPlugin.toString(), panel);
+				panel.addAncestorListener(new AncestorListener() {
+					@Override
+					public void ancestorRemoved(AncestorEvent paramAncestorEvent) {
+						// deactivateを実装したい場合はここにいれればよさそう。
+					}
+					@Override
+					public void ancestorMoved(AncestorEvent paramAncestorEvent) {
+					}
+					@Override
+					public void ancestorAdded(AncestorEvent paramAncestorEvent) {
+						plugin.onActivated();
+					}
+				});
 			}
 		}
 	}
@@ -128,11 +143,12 @@ public class MainController extends Base implements ISwingMainBase {
 				throw new RuntimeException("viewer用の入力モジュールは設定できません。");
 			}
 			if(module instanceof IMixerModule) {
-				
+				mixerModule.setViewerModule((IMixerModule) module);
 			}
 			if(module instanceof IOutputModule) {
-				
+				outputModule.setViewerModule((IOutputModule) module);
 			}
+			viewerModules.add((IViewerModule)module);
 		}
 		else if(module instanceof IInputModule) {
 			inputModule.setInputModule((IInputModule)module);
@@ -160,6 +176,16 @@ public class MainController extends Base implements ISwingMainBase {
 	@Override
 	public void unregisterModule(IModule module) {
 		if(module instanceof IViewerModule) {
+			if(module instanceof IInputModule) {
+				throw new RuntimeException("viewer用の入力モジュールは設定できません。");
+			}
+			if(module instanceof IMixerModule) {
+				mixerModule.removeViewerModule((IMixerModule) module);
+			}
+			if(module instanceof IOutputModule) {
+				outputModule.removeViewerModule((IOutputModule) module);
+			}
+			viewerModules.remove((IViewerModule)module);
 			return;
 		}
 		else if(module instanceof IInputModule) {
@@ -184,6 +210,9 @@ public class MainController extends Base implements ISwingMainBase {
 		}
 		if(outputModule != null) {
 			outputModule.onTimerEvent();
+		}
+		for(IViewerModule module : viewerModules) {
+			module.onTimerEvent();
 		}
 	}
 	@Override

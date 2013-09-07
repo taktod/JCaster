@@ -40,6 +40,20 @@ public class MixerModule implements IMixerModule {
 			mixerModule = null;
 		}
 	}
+	public void setViewerModule(IMixerModule module) {
+		viewerModules.add(module);
+		if(audioMshTag != null) {
+			audioMshTag.setTimestamp(lastTimestamp);
+			module.setData(Media.FlvTag, audioMshTag);
+		}
+		if(videoMshTag != null) {
+			videoMshTag.setTimestamp(lastTimestamp);
+			module.setData(Media.FlvTag, videoMshTag);
+		}
+	}
+	public void removeViewerModule(IMixerModule module) {
+		viewerModules.remove(module);
+	}
 	@Override
 	public void onTimerEvent() {
 		// タイマーイベントは本家
