@@ -185,7 +185,6 @@ public class Mp4Feeder {
 				// とりあえずtimestampの問題はoutputPluginでなんとかするので、必要なのは送信データのみ。
 				// mainBaseにデータを送信する。
 				// tagをみつけた場合はbaseにおくっておく。
-//				logger.info(tag);
 				passedTimestamp = tag.getTimestamp();
 				if(targetModule != null) {
 					targetModule.setData(Media.FlvTag, tag);

@@ -188,6 +188,15 @@ public class Mp4ReaderModule implements IInputModule, ActionListener, KeyListene
 	@Override
 	public void stateChanged(ChangeEvent e) {
 		if(!positionSlider.getValueIsAdjusting()) {
+			if(Math.abs(positionSlider.getValue() - feeder.getCurrentDuration() / 1000) > 2) {
+				logger.info("再生をやりなおしやってみる。");
+				try {
+					feeder.start(positionSlider.getValue());
+				}
+				catch (Exception ex) {
+					logger.error("再送信失敗", ex);
+				}
+			}
 //			logger.info(((JSlider)e.getSource()).getValue());
 			// sliderが変更になった場合は、再生を止める必要があります。
 		}
