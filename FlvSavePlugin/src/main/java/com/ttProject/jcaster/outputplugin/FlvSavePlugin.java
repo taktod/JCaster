@@ -28,6 +28,6 @@ public class FlvSavePlugin implements IPlugin {
 	}
 	@Override
 	public String toString() {
-		return "flv";
+		return "FlvSave";
 	}
 }

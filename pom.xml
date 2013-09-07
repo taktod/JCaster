@@ -20,6 +20,7 @@
     <module>NoMixerPlugin</module>
     <module>FlvSavePlugin</module>
     <module>RtmpPublishPlugin</module>
+    <module>PlayViewer</module>
   </modules>
   <dependencies>
     <dependency>

@@ -42,6 +42,6 @@ public class RtmpPublishPlugin implements IPlugin {
 	 */
 	@Override
 	public String toString() {
-		return "rtmp";
+		return "RtmpPublish";
 	}
 }

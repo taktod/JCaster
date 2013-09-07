@@ -1,5 +1,8 @@
 package com.ttProject.jcaster.controller;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -9,6 +12,9 @@ import org.apache.log4j.Logger;
 
 import com.ttProject.jcaster.SignalEvent;
 import com.ttProject.jcaster.model.PluginModel;
+import com.ttProject.jcaster.module.InputModule;
+import com.ttProject.jcaster.module.MixerModule;
+import com.ttProject.jcaster.module.OutputModule;
 import com.ttProject.jcaster.plugin.IPlugin;
 import com.ttProject.jcaster.plugin.IViewerPlugin;
 import com.ttProject.jcaster.plugin.IPlugin.Type;
@@ -18,11 +24,13 @@ import com.ttProject.jcaster.plugin.module.IInputModule;
 import com.ttProject.jcaster.plugin.module.IMixerModule;
 import com.ttProject.jcaster.plugin.module.IModule;
 import com.ttProject.jcaster.plugin.module.IOutputModule;
+import com.ttProject.jcaster.plugin.module.IViewerModule;
 import com.ttProject.jcaster.swing.MainFrame;
 
 /**
  * 中央でコントロールするコントローラー
  * @author taktod
+ * TODO viewer用のモジュール(出力モジュール等と同じ動作？)が追加されたときに、hook用のプログラムを作る必要がありそう。
  */
 public class MainController extends Base implements ISwingMainBase {
 	/** ロガー */
@@ -33,9 +41,10 @@ public class MainController extends Base implements ISwingMainBase {
 	private PluginModel pluginModel;
 	
 	// 各モジュール保持
-	private IInputModule inputModule;
-	private IOutputModule outputModule;
-	private IMixerModule mixerModule;
+	private InputModule inputModule = new InputModule();
+	private MixerModule mixerModule = new MixerModule();
+	private OutputModule outputModule = new OutputModule();
+	private Set<IViewerModule> viewerModules = new HashSet<IViewerModule>();
 	/**
 	 * コンストラクタ
 	 * @param frame
@@ -107,49 +116,65 @@ public class MainController extends Base implements ISwingMainBase {
 			}
 		}
 	}
+	/**
+	 * モジュールを登録する
+	 */
 	@Override
 	public void registerModule(IModule module) {
-		if(module instanceof IInputModule) {
-			inputModule = (IInputModule) module;
-			if(mixerModule != null) {
-				inputModule.registerMixerModule(mixerModule);
+		// viewerModuleの場合はextraModuleとして追加しなければいけない。
+		if(module instanceof IViewerModule) {
+			// viewerモジュール
+			if(module instanceof IInputModule) {
+				throw new RuntimeException("viewer用の入力モジュールは設定できません。");
 			}
+			if(module instanceof IMixerModule) {
+				
+			}
+			if(module instanceof IOutputModule) {
+				
+			}
+		}
+		else if(module instanceof IInputModule) {
+			inputModule.setInputModule((IInputModule)module);
+			inputModule.registerMixerModule(mixerModule);
 		}
 		else if(module instanceof IOutputModule) {
-			outputModule = (IOutputModule) module;
-			if(mixerModule != null) {
-				mixerModule.registerOutputModule(outputModule);
-			}
+			outputModule.setOutputModule((IOutputModule)module);
+//			if(mixerModule != null) {
+//				mixerModule.registerOutputModule(outputModule);
+//			}
 		}
 		else if(module instanceof IMixerModule) {
-			mixerModule = (IMixerModule) module;
-			if(inputModule != null) {
-				inputModule.registerMixerModule(mixerModule);
-			}
-			if(outputModule != null) {
-				mixerModule.registerOutputModule(outputModule);
-			}
+			mixerModule.setMixerModule((IMixerModule)module);
+			mixerModule.registerOutputModule(outputModule);
+//			inputModule.registerMixerModule(mixerModule);
+			mixerModule.registerOutputModule(outputModule);
+//			if(outputModule != null) {
+//				mixerModule.registerOutputModule(outputModule);
+//			}
 		}
 	}
+	/**
+	 * モジュールをはずす。
+	 */
 	@Override
 	public void unregisterModule(IModule module) {
-		if(inputModule == module) {
-			inputModule = null;
+		if(module instanceof IViewerModule) {
+			return;
 		}
-		else if(outputModule == module)
-		{
-			if(mixerModule != null) {
-				mixerModule.registerOutputModule(null);
-			}
-			outputModule = null;
+		else if(module instanceof IInputModule) {
+			inputModule.removeInputModule((IInputModule)module);
+		}
+		else if(module instanceof IOutputModule) {
+			outputModule.removeOutputModule((IOutputModule)module);
 		}
 		else if(mixerModule == module) {
-			if(inputModule != null) {
-				inputModule.registerMixerModule(null);
-			}
-			mixerModule = null;
+			mixerModule.removeMixerModule((IMixerModule)module);
 		}
 	}
+	/**
+	 * タイマーによる処理を実行
+	 */
 	public void fireTimerEvent() {
 		if(inputModule != null) {
 			inputModule.onTimerEvent();
@@ -160,7 +185,6 @@ public class MainController extends Base implements ISwingMainBase {
 		if(outputModule != null) {
 			outputModule.onTimerEvent();
 		}
-//		logger.info("timeEvent");
 	}
 	@Override
 	public JFrame getMainFrame() {

@@ -10,10 +10,7 @@ import com.ttProject.jcaster.plugin.base.ISwingMainBase;
 import com.ttProject.jcaster.plugin.base.IMainBase.Media;
 import com.ttProject.jcaster.plugin.module.IMixerModule;
 import com.ttProject.jcaster.plugin.module.IOutputModule;
-import com.ttProject.media.flv.CodecType;
 import com.ttProject.media.flv.Tag;
-import com.ttProject.media.flv.tag.AudioTag;
-import com.ttProject.media.flv.tag.VideoTag;
 import com.ttProject.swing.component.GroupLayoutEx;
 
 /**
@@ -24,11 +21,6 @@ public class NoMixerModule implements IMixerModule {
 	/** 動作ロガー */
 	private final Logger logger = Logger.getLogger(NoMixerModule.class);
 
-	/** mediaSequenceHeaderの保持(あたらしく接続する出力モジュールが変更になったときに送る必要がある。) */
-	private VideoTag videoMshTag = null;
-	private AudioTag audioMshTag = null;
-	/** 経過時刻 */
-	private int passedTime;
 	/** 受け渡しを実行する出力モジュール */
 	private IOutputModule targetModule;
 	/**
@@ -77,29 +69,9 @@ public class NoMixerModule implements IMixerModule {
 	@Override
 	public void setData(Media media, Object mediaData) {
 		if(media == Media.FlvTag && mediaData instanceof Tag) {
-			Tag tag = (Tag)mediaData;
-			if(tag instanceof AudioTag) {
-				AudioTag aTag = (AudioTag) tag;
-				if(aTag.getCodec() == CodecType.AAC && aTag.isMediaSequenceHeader()) {
-					audioMshTag = aTag;
-				}
-				if(aTag.getCodec() != CodecType.AAC) {
-					audioMshTag = null;
-				}
-			}
-			if(tag instanceof VideoTag) {
-				VideoTag vTag = (VideoTag) tag;
-				if(vTag.getCodec() == CodecType.AVC && vTag.isMediaSequenceHeader()) {
-					videoMshTag = vTag;
-				}
-				if(vTag.getCodec() != CodecType.AVC) {
-					videoMshTag = null;
-				}
-			}
-			passedTime = tag.getTimestamp();
 			// videoMshかaudioMshである場合はデータを保持する必要あり。
 			if(targetModule != null) {
-				targetModule.setMixedData(tag);
+				targetModule.setMixedData((Tag) mediaData);
 			}
 		}
 		else {
@@ -112,16 +84,5 @@ public class NoMixerModule implements IMixerModule {
 	@Override
 	public void registerOutputModule(IOutputModule outputModule) {
 		targetModule = outputModule;
-		// 登録したときにすでにmshデータがある場合は登録する必要あり。
-		if(targetModule != null) {
-			if(audioMshTag != null) {
-				audioMshTag.setTimestamp(passedTime);
-				targetModule.setMixedData(audioMshTag);
-			}
-			if(videoMshTag != null) {
-				videoMshTag.setTimestamp(passedTime);
-				targetModule.setMixedData(videoMshTag);
-			}
-		}
 	}
 }

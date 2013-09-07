@@ -11,10 +11,7 @@ import com.ttProject.jcaster.plugin.module.IMixerModule;
 import com.ttProject.media.extra.flv.FlvOrderModel;
 import com.ttProject.media.extra.mp4.IndexFileCreator;
 import com.ttProject.media.extra.mp4.Meta;
-import com.ttProject.media.flv.CodecType;
 import com.ttProject.media.flv.Tag;
-import com.ttProject.media.flv.tag.AudioTag;
-import com.ttProject.media.flv.tag.VideoTag;
 import com.ttProject.media.mp4.Atom;
 import com.ttProject.media.mp4.atom.Moov;
 import com.ttProject.nio.channels.FileReadChannel;
@@ -36,9 +33,6 @@ public class Mp4Feeder {
 	private long passedTimestamp = 0;
 	private LinkedList<Tag> tagList;
 	private long startTime = -1;
-	/** 現在実行中のデータのmshタグ */
-	private AudioTag audioMshTag = null;
-	private VideoTag videoMshTag = null;
 	/** 変換モジュール */
 	private IMixerModule targetModule;
 	/**
@@ -63,14 +57,6 @@ public class Mp4Feeder {
 		if(module == null) {
 			targetModule = null;
 			return;
-		}
-		if(audioMshTag != null) {
-			audioMshTag.setTimestamp((int)passedTimestamp);
-			module.setData(Media.FlvTag, audioMshTag);
-		}
-		if(videoMshTag != null) {
-			videoMshTag.setTimestamp((int)passedTimestamp);
-			module.setData(Media.FlvTag, videoMshTag);
 		}
 		targetModule = module;
 	}
@@ -163,24 +149,6 @@ public class Mp4Feeder {
 			Tag tag = null;
 			while(tagList.size() != 0 && (tag = tagList.removeFirst()) != null) {
 				// mediaSequenceHeaderがある場合はそのデータをコピーしておく
-				if(tag instanceof AudioTag) {
-					AudioTag aTag = (AudioTag) tag;
-					if(aTag.getCodec() == CodecType.AAC && aTag.isMediaSequenceHeader()) {
-						audioMshTag = aTag;
-					}
-					if(aTag.getCodec() != CodecType.AAC) {
-						audioMshTag = null;
-					}
-				}
-				if(tag instanceof VideoTag) {
-					VideoTag vTag = (VideoTag) tag;
-					if(vTag.getCodec() == CodecType.AVC && vTag.isMediaSequenceHeader()) {
-						videoMshTag = vTag;
-					}
-					if(vTag.getCodec() != CodecType.AVC) {
-						videoMshTag = null;
-					}
-				}
 				// このtagデータは先頭にmediaSequenceHeaderとmetaTagがある。
 				// とりあえずtimestampの問題はoutputPluginでなんとかするので、必要なのは送信データのみ。
 				// mainBaseにデータを送信する。
@@ -205,8 +173,6 @@ public class Mp4Feeder {
 	 * 停止処理
 	 */
 	public void close() {
-		videoMshTag = null;
-		audioMshTag = null;
 		if(tmp != null) {
 			try {
 				tmp.close();
