@@ -44,11 +44,9 @@ public class FlvSaveModule implements IOutputModule, ActionListener, KeyListener
 	// 最終で取得したデータとあたらしいデータが100tic以上はなれている場合はあたらしいデータがきたとして処理した方がよさそう。
 	// だが１つのファイルとしたいと思う。
 	private FlvSaver saver = null;
-	private SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
-	{
-		format.setTimeZone(TimeZone.getTimeZone("UTC"));
-	}
+	private final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
 	public FlvSaveModule() {
+		format.setTimeZone(TimeZone.getTimeZone("UTC"));
 		fileField = new JTextField(10);
 		fileField.addKeyListener(this);
 		fileButton = new JButton("file");

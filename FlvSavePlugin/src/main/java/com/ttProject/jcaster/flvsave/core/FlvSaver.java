@@ -18,14 +18,12 @@ import com.ttProject.media.flv.tag.VideoTag;
 public class FlvSaver {
 	/** ロガー */
 //	private final Logger logger = Logger.getLogger(FlvSaver.class);
-//	private String target;
 	private FileChannel channel;
 	private AudioTag audioMshTag = null;
 	private VideoTag videoMshTag = null;
 	private int processPos = -1; // 処理中のデータの位置
 	private int savePos = 0; // 保存しているデータの位置(ファイルの長さでもある。)
 	public FlvSaver(String target) throws Exception {
-//		this.target = target;
 		channel = new FileOutputStream(target).getChannel();
 		FlvHeader header = new FlvHeader();
 		header.setAudioFlg(true);

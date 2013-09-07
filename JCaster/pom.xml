@@ -7,7 +7,8 @@
   </parent>
   <artifactId>JCaster</artifactId>
   <name>JCaster</name>
-  <description>Javaをベースにしたプラグイン形式のrtmp配信ソフトウェア</description>
+  <description>Javaをベースにしたプラグイン形式のrtmp配信ソフトウェア
+</description>
   <dependencies>
     <dependency>
       <groupId>com.ttProject.jcaster</groupId>

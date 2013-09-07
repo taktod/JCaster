@@ -14,7 +14,7 @@ LGPL
  JCaster.Plugin
  Mp4ReaderPlugin
  NoMixerPlugin
- RtmpPublishPlugin(作りかけ)
+ RtmpPublishPlugin
 
 GPL
 
@@ -26,10 +26,9 @@ GPL
 カメラの取り込み(vlcjやxuggleにやらせる？)やデスクトップキャプチャ(javaのrobotで可能)でできる予定。
 
 xsplitみたいに高機能になったら面白いですね。
-いまのところできるのは、mp4→flv変換。
+いまのところできるのは、mp4→flv変換。と任意のmp4をrtmpに配信すること。
 
 今後やること予定：
-・rtmpPublishPlugin flazr利用 LGPL
 ・playViewer(再生中の動画視聴部) xuggle利用 GPL
 ・MixerPlugin(コーデック変換) xuggle利用 GPL
 ・FlvReaderPlugin(flvを流す動作) LGPL
