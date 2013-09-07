@@ -38,22 +38,23 @@ import com.ttProject.swing.component.GroupLayoutEx;
 public class Mp4ReaderModule implements IInputModule, ActionListener, KeyListener, ChangeListener, FocusListener {
 	/** 動作ロガー */
 	private final Logger logger = Logger.getLogger(Mp4ReaderModule.class);
+	/** swingのフィールド設定 */
 	private final JTextField fileField;
 	private final JButton fileButton;
 	private final JButton playButton;
 	private final JSlider positionSlider;
 	private final JLabel posInfoLabel;
+	/** データやりとりインスタンス */
 	private Mp4Feeder feeder = null;
 	/** 引き継ぐ相手のモジュール */
 	private IMixerModule targetModule = null;
-	private SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
-	{
-		format.setTimeZone(TimeZone.getTimeZone("UTC"));
-	}
+	/** 表示用のフォーマットデータ */
+	private final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
 	/**
 	 * コンストラクタ
 	 */
 	public Mp4ReaderModule() {
+		format.setTimeZone(TimeZone.getTimeZone("UTC"));
 		fileField = new JTextField(10);
 		fileField.addKeyListener(this);
 		fileField.addFocusListener(this);
@@ -106,6 +107,9 @@ public class Mp4ReaderModule implements IInputModule, ActionListener, KeyListene
 		panel.validate();
 		panel.repaint();
 	}
+	/**
+	 * 0.1秒ごとに呼び出されるイベント
+	 */
 	@Override
 	public void onTimerEvent() {
 		// 配信状態になっている場合は、すでにおくっているであろうデータを送信する必要あり。
@@ -126,6 +130,9 @@ public class Mp4ReaderModule implements IInputModule, ActionListener, KeyListene
 			}
 		}
 	}
+	/**
+	 * swingのイベント
+	 */
 	@Override
 	public void actionPerformed(ActionEvent event) {
 		ISwingMainBase mainbase = BaseHandler.getISwingMainBase();
@@ -169,10 +176,19 @@ public class Mp4ReaderModule implements IInputModule, ActionListener, KeyListene
 			playButton.setText("play");
 		}
 	}
+	/**
+	 * swingのキーイベント
+	 */
 	@Override
 	public void keyPressed(KeyEvent e) {}
+	/**
+	 * swingのキーイベント
+	 */
 	@Override
 	public void keyReleased(KeyEvent e) {}
+	/**
+	 * swingのキーイベント
+	 */
 	@Override
 	public void keyTyped(KeyEvent e) {
 		if("".equals(fileField.getText())) {
@@ -185,10 +201,15 @@ public class Mp4ReaderModule implements IInputModule, ActionListener, KeyListene
 			positionSlider.setValue(0);
 		}
 	}
+	/**
+	 * swingのスライダーイベント
+	 */
 	@Override
 	public void stateChanged(ChangeEvent e) {
 		if(!positionSlider.getValueIsAdjusting()) {
-			if(Math.abs(positionSlider.getValue() - feeder.getCurrentDuration() / 1000) > 2) {
+			// 表示位置がきりかわったら再生中ならそこから再生を再開したいところ。
+			// このままだと再生していないときでもシークしたら再生はじまっちゃうね。
+			if(playButton.getText().equals("stop") && Math.abs(positionSlider.getValue() - feeder.getCurrentDuration() / 1000) > 2) {
 				logger.info("再生をやりなおしやってみる。");
 				try {
 					feeder.start(positionSlider.getValue());
@@ -197,17 +218,21 @@ public class Mp4ReaderModule implements IInputModule, ActionListener, KeyListene
 					logger.error("再送信失敗", ex);
 				}
 			}
-//			logger.info(((JSlider)e.getSource()).getValue());
-			// sliderが変更になった場合は、再生を止める必要があります。
 		}
 		// 位置がかわったら、posTextの表示変更
 		posInfoLabel.setText(format.format(new Date(positionSlider.getValue() * 1000)) + " / " + format.format(new Date(feeder.getTotalDuration())));
 		posInfoLabel.validate();
 		posInfoLabel.repaint();
 	}
+	/**
+	 * swingのテキストイベント
+	 */
 	@Override
 	public void focusGained(FocusEvent e) {
 	}
+	/**
+	 * swingのテキストイベント
+	 */
 	@Override
 	public void focusLost(FocusEvent e) {
 		logger.info("フォーカスを抜けます。");

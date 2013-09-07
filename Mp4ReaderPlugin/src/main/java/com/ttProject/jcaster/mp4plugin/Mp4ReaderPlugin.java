@@ -12,7 +12,8 @@ import com.ttProject.jcaster.plugin.IPlugin;
 public class Mp4ReaderPlugin implements IPlugin {
 	/** 動作ロガー */
 	private static final Logger logger = Logger.getLogger(Mp4ReaderPlugin.class);
-	private Mp4ReaderModule module = new Mp4ReaderModule();
+	/** 動作モジュール */
+	private final Mp4ReaderModule module = new Mp4ReaderModule();
 	/**
 	 * バージョン番号を応答する。
 	 */
@@ -38,6 +39,9 @@ public class Mp4ReaderPlugin implements IPlugin {
 		// データのセットアップを実行
 		module.setup();
 	}
+	/**
+	 * 名前応答
+	 */
 	@Override
 	public String toString() {
 		return "Mp4Reader";
