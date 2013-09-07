@@ -38,6 +38,13 @@ public class RtmpPublishPlugin implements IPlugin {
 		module.setup();
 	}
 	/**
+	 * 無効化されたときのイベント
+	 */
+	@Override
+	public void onDeactivated() {
+		
+	}
+	/**
 	 * 名前設定
 	 */
 	@Override

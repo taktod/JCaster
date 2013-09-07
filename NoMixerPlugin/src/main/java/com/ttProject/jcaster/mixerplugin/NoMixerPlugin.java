@@ -36,6 +36,13 @@ public class NoMixerPlugin implements IPlugin {
 		module.setup();
 	}
 	/**
+	 * 無効になったときの処理
+	 */
+	@Override
+	public void onDeactivated() {
+		
+	}
+	/**
 	 * 名前応答
 	 */
 	@Override

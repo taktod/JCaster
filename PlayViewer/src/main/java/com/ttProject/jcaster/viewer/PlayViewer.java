@@ -11,17 +11,16 @@ public class PlayViewer implements IViewerPlugin {
 	public String versionId() {
 		return "0.0.1";
 	}
-
 	@Override
 	public Type getType() {
 		return Type.Viewer;
 	}
-
 	@Override
 	public void onActivated() {
-		// 有効になったらplayViewerModuleを登録しておきたい。
 	}
-
+	@Override
+	public void onDeactivated() {
+	}
 	@Override
 	public void setViewerPanel(JPanel panel) {
 		module.setup(panel);

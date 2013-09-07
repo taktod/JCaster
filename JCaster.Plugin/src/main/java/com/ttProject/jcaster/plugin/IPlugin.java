@@ -21,6 +21,10 @@ public interface IPlugin {
 	 */
 	public void onActivated();
 	/**
+	 * 無効になったときの動作
+	 */
+	public void onDeactivated();
+	/**
 	 * プラグインのタイプ定義
 	 * @author taktod
 	 */

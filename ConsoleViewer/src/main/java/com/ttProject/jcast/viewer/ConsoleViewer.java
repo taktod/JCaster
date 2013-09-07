@@ -50,6 +50,12 @@ public class ConsoleViewer implements IViewerPlugin, ActionListener {
 	public void onActivated() {
 	}
 	/**
+	 * 無効化されたときの処理
+	 */
+	@Override
+	public void onDeactivated() {
+	}
+	/**
 	 * データの追加処理
 	 * @param data
 	 */

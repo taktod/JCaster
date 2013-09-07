@@ -2,8 +2,6 @@ package com.ttProject.jcaster.swing;
 
 import java.awt.Dimension;
 import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
@@ -12,7 +10,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 
 import com.ttProject.jcaster.controller.MainController;
-import com.ttProject.jcaster.plugin.IPlugin;
 import com.ttProject.jcaster.plugin.module.IInputModule;
 import com.ttProject.jcaster.plugin.module.IMixerModule;
 import com.ttProject.jcaster.plugin.module.IOutputModule;
@@ -21,7 +18,7 @@ import com.ttProject.jcaster.plugin.module.IOutputModule;
  * 中心のGUI部分
  * @author taktod
  */
-public class MainFrame extends JFrame implements ActionListener {
+public class MainFrame extends JFrame {
 	private static final long serialVersionUID = -1233747404470340015L;
 	/** 動作ロガー */
 //	private static final Logger logger = Logger.getLogger(MainFrame.class);
@@ -85,21 +82,21 @@ public class MainFrame extends JFrame implements ActionListener {
 		JScrollPane scroll = new JScrollPane(inputPanel);
 		panel.add(scroll);
 		inputComboBox = new JComboBox();
-		inputComboBox.addActionListener(this);
+		inputComboBox.addActionListener(mainController);
 		mainController.setupInputModule(inputComboBox);
 		// mixer用
 		mixerPanel = new JPanel();
 		scroll = new JScrollPane(mixerPanel);
 		panel.add(scroll);
 		mixerComboBox = new JComboBox();
-		mixerComboBox.addActionListener(this);
+		mixerComboBox.addActionListener(mainController);
 		mainController.setupMixerModule(mixerComboBox);
 
 		outputPanel = new JPanel();
 		scroll = new JScrollPane(outputPanel);
 		panel.add(scroll);
 		outputComboBox = new JComboBox();
-		outputComboBox.addActionListener(this);
+		outputComboBox.addActionListener(mainController);
 		mainController.setupOutputModule(outputComboBox);
 	}
 	/**
@@ -135,18 +132,5 @@ public class MainFrame extends JFrame implements ActionListener {
 			return mixerComboBox;
 		}
 		return null;
-	}
-	/**
-	 * コンボボックスのステータス変更時の動作
-	 */
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		if(e.getSource() instanceof JComboBox) {
-			JComboBox comboBox = (JComboBox) e.getSource();
-			Object item = comboBox.getSelectedItem();
-			if(item instanceof IPlugin) {
-				((IPlugin) item).onActivated();
-			}
-		}
 	}
 }

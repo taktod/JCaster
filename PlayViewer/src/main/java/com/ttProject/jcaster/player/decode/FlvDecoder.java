@@ -35,6 +35,7 @@ import com.xuggle.xuggler.video.IConverter;
  * flvTagデータをデコードして、表示します。
  * とりあえず映像を表示するだけでもやっておきたいところ。
  * 音声の再生を実施するとたぶん、音声再生中にCPUが占領される現象があるので、そうしないようにしておくことにします。
+ * 映像データの再生が安定しないのは、100ミリ秒ごとにデータの塊がとんでくるため、時間で制御をきちんとすれば、安定した再生になるはず。
  * @author taktod
  */
 public class FlvDecoder implements Runnable {
@@ -199,6 +200,8 @@ public class FlvDecoder implements Runnable {
 			// デコーダーが未設定もしくはコーデックが一致していない場合
 			if(videoDecoder == null
 					|| (vTag.getCodec() == CodecType.H263 && videoDecoder.getCodecID() != ICodec.ID.CODEC_ID_FLV1)
+					|| (vTag.getCodec() == CodecType.ON2VP6 && videoDecoder.getCodecID() != ICodec.ID.CODEC_ID_VP6)
+					|| (vTag.getCodec() == CodecType.ON2VP6_ALPHA && videoDecoder.getCodecID() != ICodec.ID.CODEC_ID_VP6A)
 					|| (vTag.getCodec() == CodecType.AVC && videoDecoder.getCodecID() != ICodec.ID.CODEC_ID_H264)) {
 				if(vTag.getCodec() == CodecType.H263) {
 //					videoDecoder = IStreamCoder.make(Direction.DECODING, ICodec.ID.CODEC_ID_H264);

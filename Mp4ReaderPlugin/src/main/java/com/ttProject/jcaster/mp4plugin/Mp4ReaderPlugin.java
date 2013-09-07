@@ -40,6 +40,13 @@ public class Mp4ReaderPlugin implements IPlugin {
 		module.setup();
 	}
 	/**
+	 * 無効になったときの動作
+	 */
+	@Override
+	public void onDeactivated() {
+		
+	}
+	/**
 	 * 名前応答
 	 */
 	@Override

@@ -1,5 +1,7 @@
 package com.ttProject.jcaster.controller;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -34,19 +36,24 @@ import com.ttProject.jcaster.swing.MainFrame;
  * @author taktod
  * TODO viewer用のモジュール(出力モジュール等と同じ動作？)が追加されたときに、hook用のプログラムを作る必要がありそう。
  */
-public class MainController extends Base implements ISwingMainBase {
+public class MainController extends Base implements ISwingMainBase, ActionListener {
 	/** ロガー */
 	private final Logger logger = Logger.getLogger(MainController.class);
 	/** 中央フレーム保持 */
 	private MainFrame frame;
 	/** plugin管理用のモデル保持 */
 	private PluginModel pluginModel;
-	
+
 	// 各モジュール保持
 	private InputModule inputModule = new InputModule();
 	private MixerModule mixerModule = new MixerModule();
 	private OutputModule outputModule = new OutputModule();
 	private Set<IViewerModule> viewerModules = new HashSet<IViewerModule>();
+	
+	// 選択中のプラグイン保持
+	private IPlugin inputPlugin;
+	private IPlugin outputPlugin;
+	private IPlugin mixerPlugin;
 	/**
 	 * コンストラクタ
 	 * @param frame
@@ -86,6 +93,7 @@ public class MainController extends Base implements ISwingMainBase {
 					@Override
 					public void ancestorRemoved(AncestorEvent paramAncestorEvent) {
 						// deactivateを実装したい場合はここにいれればよさそう。
+						plugin.onDeactivated();
 					}
 					@Override
 					public void ancestorMoved(AncestorEvent paramAncestorEvent) {
@@ -237,25 +245,74 @@ public class MainController extends Base implements ISwingMainBase {
 	 * プロファイル設定を読み込み、そのデータを開きます。
 	 */
 	public void loadProfile() {
-		// とりあえず決まっていないので現状一番上にあるプラグインを有効にすることにします。
+		// とりあえず決まっていないので現状一番上にあるプラグインを有効にすることにします。(これはとりあえずいらないかもね。)
 		JComboBox comboBox = getComboBox(IInputModule.class);
 		Object obj = comboBox.getItemAt(0);
 		if(obj != null) {
 			IPlugin plugin = (IPlugin) obj;
 			// 選択されたものとして動作させる。
 			plugin.onActivated();
+			inputPlugin = plugin;
 		}
 		comboBox = getComboBox(IMixerModule.class);
 		obj = comboBox.getItemAt(0);
 		if(obj != null) {
 			IPlugin plugin = (IPlugin) obj;
 			plugin.onActivated();
+			mixerPlugin = plugin;
 		}
 		comboBox = getComboBox(IOutputModule.class);
 		obj = comboBox.getItemAt(0);
 		if(obj != null) {
 			IPlugin plugin = (IPlugin) obj;
 			plugin.onActivated();
+			outputPlugin = plugin;
+		}
+	}
+	/**
+	 * それぞれのコンポーネントのコンボボックスが変更されたときの処理
+	 */
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		if(e.getSource() instanceof JComboBox) {
+			JComboBox comboBox = (JComboBox) e.getSource();
+			Object item = comboBox.getSelectedItem();
+			if(item instanceof IPlugin) {
+				IPlugin plugin = (IPlugin) item;
+				switch(plugin.getType()) {
+				case Input:
+					if(inputPlugin == plugin) {
+						return;
+					}
+					if(inputPlugin != null) {
+						inputPlugin.onDeactivated();
+					}
+					inputPlugin = plugin;
+					break;
+				case Mixer:
+					if(mixerPlugin == plugin) {
+						return;
+					}
+					if(mixerPlugin != null) {
+						mixerPlugin.onDeactivated();
+					}
+					mixerPlugin = plugin;
+					break;
+				case Output:
+					if(outputPlugin == plugin) {
+						// 同じアイテムを選択しただけなので、なにもしない。
+						return;
+					}
+					if(outputPlugin != null) {
+						outputPlugin.onDeactivated();
+					}
+					outputPlugin = plugin;
+					break;
+				case Viewer:
+					return;
+				}
+				plugin.onActivated();
+			}
 		}
 	}
 }
