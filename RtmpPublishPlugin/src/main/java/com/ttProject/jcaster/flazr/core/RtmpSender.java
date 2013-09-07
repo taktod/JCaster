@@ -46,7 +46,6 @@ public class RtmpSender implements RtmpReader {
 	private int aggregateDuration = 0;
 
 	private final String rtmpAddress; // こっちは一度つくったら変更不可(接続先の変更になるため、やり直す必要あり。)
-	private String streamName; // あとで変更が効くようにしておく。
 	private static final Pattern pattern = Pattern.compile("^rtmp://([^/:]+)(:[0-9]+)?/(.*)(.*?)$");
 
 	private ClientBootstrap bootstrap = null;
@@ -68,9 +67,8 @@ public class RtmpSender implements RtmpReader {
 	 * @param rtmpAdderss
 	 * @param streamName
 	 */
-	public RtmpSender(String rtmpAdderss, String streamName, RtmpPublishModule module) {
+	public RtmpSender(String rtmpAdderss, RtmpPublishModule module) {
 		this.rtmpAddress = rtmpAdderss;
-		this.streamName = streamName;
 		this.module = module;
 	}
 	/**
@@ -80,7 +78,6 @@ public class RtmpSender implements RtmpReader {
 	public void open() throws Exception {
 		options = new ClientOptions();
 		parseAddress(options);
-		options.setStreamName(streamName);
 		options.publishLive();
 		options.setFileToPublish(null);
 		options.setReaderToPublish(this);
@@ -168,10 +165,8 @@ public class RtmpSender implements RtmpReader {
 		}
 		options.setAppName(matcher.group(3));
 	}
-	public void setStreamName(String name) {
-//		streamName = name;
-	}
 	public void publish() {
+		options.setStreamName(module.getStreamName());
 		isPublishing = true;
 		clientHandler.publish();
 	}

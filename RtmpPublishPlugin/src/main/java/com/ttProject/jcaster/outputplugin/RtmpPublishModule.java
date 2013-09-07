@@ -125,14 +125,11 @@ public class RtmpPublishModule implements IOutputModule, ActionListener {
 		if("connect".equals(e.getActionCommand())) {
 			logger.info("コネクトがおされました。");
 			// rtmpの接続を開始します。
-			sender = new RtmpSender(urlField.getText(), nameField.getText(), this);
+			sender = new RtmpSender(urlField.getText(), this);
 			try {
 				sender.open();
-//				sender.send(audioMshTag);
-//				sender.send(videoMshTag);
 				connectButton.setText("close");
 				urlField.setEnabled(false);
-				nameField.setEnabled(false);
 				publishButton.setEnabled(true);
 			}
 			catch (Exception ex) {
@@ -152,17 +149,30 @@ public class RtmpPublishModule implements IOutputModule, ActionListener {
 			logger.info("publishがおされました。");
 			sender.publish();
 			publishButton.setText("unpublish");
+			nameField.setEnabled(false);
 		}
 		if("unpublish".equals(e.getActionCommand())) {
 			logger.info("unpublishがおされました。");
 			sender.unpublish();
 			publishButton.setText("publish");
+			nameField.setEnabled(true);
 		}
 	}
+	/**
+	 * mshのデータを取得する動作
+	 * @throws Exception
+	 */
 	public void requestMshData() throws Exception {
 		if(sender != null) {
 			sender.send(audioMshTag);
 			sender.send(videoMshTag);
 		}
+	}
+	/**
+	 * streamNameにはいっているデータを参照する動作
+	 * @return
+	 */
+	public String getStreamName() {
+		return nameField.getText();
 	}
 }
