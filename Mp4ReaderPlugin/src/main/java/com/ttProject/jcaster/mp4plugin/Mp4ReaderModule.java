@@ -87,7 +87,7 @@ public class Mp4ReaderModule implements IInputModule, ActionListener, KeyListene
 	 * swingのコンポーネントを構築します。
 	 * @param mainbase
 	 */
-	public void setupSwingComponent(ISwingMainBase mainbase) {
+	private void setupSwingComponent(ISwingMainBase mainbase) {
 		// swingの動作なので、swingの動作の初期化を実施します。
 		JPanel panel = mainbase.getComponentPanel(getClass());
 		panel.removeAll();
