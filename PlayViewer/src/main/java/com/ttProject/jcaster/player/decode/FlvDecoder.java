@@ -96,26 +96,28 @@ public class FlvDecoder implements Runnable {
 					// 映像データの場合
 					VideoTag vTag = (VideoTag) tag;
 					if(vTag.getCodec() != CodecType.AVC) {
+						// h264以外うまく動作できないので、とりあえず処理しないようにしておく。
 						continue;
 					}
 					// デコーダーについて調査する。
 					checkDecoder(tag);
-					if(vTag.isMediaSequenceHeader()) {
-						// mshの場合はspsとppsを取得する。
-						ConfigData configData = new ConfigData();
-						IReadChannel rawData = new ByteReadChannel(vTag.getRawData());
-						rawData.position(3);
-						List<Frame> nals = configData.getNals(rawData);
-						for(Frame nal : nals) {
-							if(nal instanceof SequenceParameterSet) {
-								sps = (SequenceParameterSet) nal;
+					if(vTag.getCodec() == CodecType.AVC) {
+						if(vTag.isMediaSequenceHeader()) {
+							// mshの場合はspsとppsを取得する。
+							ConfigData configData = new ConfigData();
+							IReadChannel rawData = new ByteReadChannel(vTag.getRawData());
+							rawData.position(3);
+							List<Frame> nals = configData.getNals(rawData);
+							for(Frame nal : nals) {
+								if(nal instanceof SequenceParameterSet) {
+									sps = (SequenceParameterSet) nal;
+								}
+								else if(nal instanceof PictureParameterSet) {
+									pps = (PictureParameterSet) nal;
+								}
 							}
-							else if(nal instanceof PictureParameterSet) {
-								pps = (PictureParameterSet) nal;
-							}
+							continue;
 						}
-					}
-					else if(vTag.getCodec() == CodecType.AVC) {
 						// avcの場合
 						ByteBuffer rawData = vTag.getRawData();
 						rawData.position(7);
@@ -161,7 +163,7 @@ public class FlvDecoder implements Runnable {
 						packet.setPts(vTag.getTimestamp());
 						packet.setTimeBase(IRational.make(1, 1000));
 						packet.setComplete(true, size);
-						
+
 						// データができたので、pictureに変換します。
 						IVideoPicture picture = IVideoPicture.make(videoDecoder.getPixelType(), videoDecoder.getWidth(), videoDecoder.getHeight());
 						int offset = 0;
@@ -187,6 +189,39 @@ public class FlvDecoder implements Runnable {
 					}
 					else {
 						// その他のデータの場合
+						ByteBuffer rawData = vTag.getRawData();
+						IBuffer bufData = null;
+						int size = rawData.remaining();
+						packet.setKeyPacket(vTag.isKeyFrame());
+						bufData = IBuffer.make(null, rawData.array(), 0, size);
+						packet.setData(bufData);
+						packet.setFlags(1);
+						packet.setDts(vTag.getTimestamp());
+						packet.setPts(vTag.getTimestamp());
+						packet.setTimeBase(IRational.make(1, 1000));
+						packet.setComplete(true, size);
+						// データができたので、pictureに変換します。
+						IVideoPicture picture = IVideoPicture.make(videoDecoder.getPixelType(), videoDecoder.getWidth(), videoDecoder.getHeight());
+						int offset = 0;
+						while(offset < packet.getSize()) {
+							int bytesDecoded = videoDecoder.decodeVideo(picture, packet, offset);
+							if(bytesDecoded < 0) {
+								throw new Exception("デコードに失敗しました。");
+							}
+							offset += bytesDecoded;
+							if(picture.isComplete()) {
+								IVideoPicture newPic = picture;
+								if(picture.getPixelType() != IPixelFormat.Type.BGR24) {
+									IVideoResampler resampler = IVideoResampler.make(videoDecoder.getWidth(), videoDecoder.getHeight(), IPixelFormat.Type.BGR24, videoDecoder.getWidth(), videoDecoder.getHeight(), videoDecoder.getPixelType());
+									newPic = IVideoPicture.make(resampler.getOutputPixelFormat(), picture.getWidth(), picture.getHeight());
+									if(resampler.resample(newPic, picture) < 0) {
+										throw new Exception("リサンプル失敗しました。");
+									}
+								}
+								IConverter converter = ConverterFactory.createConverter("XUGGLER-BGR-24", newPic);
+								component.setImage(converter.toImage(newPic));
+							}
+						}
 					}
 				}
 				else if(tag instanceof AudioTag) {
@@ -195,7 +230,7 @@ public class FlvDecoder implements Runnable {
 			}
 		}
 		catch (Exception e) {
-			logger.error("デコード処理で失敗しました。");
+			logger.error("デコード処理で失敗しました。", e);
 		}
 	}
 	private void checkDecoder(Tag tag) throws Exception {
@@ -207,15 +242,20 @@ public class FlvDecoder implements Runnable {
 			// デコーダーが未設定もしくはコーデックが一致していない場合
 			if(videoDecoder == null
 					|| (vTag.getCodec() == CodecType.H263 && videoDecoder.getCodecID() != ICodec.ID.CODEC_ID_FLV1)
-					|| (vTag.getCodec() == CodecType.ON2VP6 && videoDecoder.getCodecID() != ICodec.ID.CODEC_ID_VP6)
+					|| (vTag.getCodec() == CodecType.ON2VP6 && videoDecoder.getCodecID() != ICodec.ID.CODEC_ID_VP6F)
 					|| (vTag.getCodec() == CodecType.ON2VP6_ALPHA && videoDecoder.getCodecID() != ICodec.ID.CODEC_ID_VP6A)
 					|| (vTag.getCodec() == CodecType.AVC && videoDecoder.getCodecID() != ICodec.ID.CODEC_ID_H264)) {
-				if(vTag.getCodec() == CodecType.H263) {
-//					videoDecoder = IStreamCoder.make(Direction.DECODING, ICodec.ID.CODEC_ID_H264);
-					throw new RuntimeException("h263の変換は未実装です");
-				}
-				else if(vTag.getCodec() == CodecType.AVC) {
+				if(vTag.getCodec() == CodecType.AVC) {
 					videoDecoder = IStreamCoder.make(Direction.DECODING, ICodec.ID.CODEC_ID_H264);
+				}
+				else if(vTag.getCodec() == CodecType.H263) {
+					videoDecoder = IStreamCoder.make(Direction.DECODING, ICodec.ID.CODEC_ID_FLV1);
+				}
+				else if(vTag.getCodec() == CodecType.ON2VP6) {
+					videoDecoder = IStreamCoder.make(Direction.DECODING, ICodec.ID.CODEC_ID_VP6F);
+				}
+				else if(vTag.getCodec() == CodecType.ON2VP6_ALPHA) {
+					videoDecoder = IStreamCoder.make(Direction.DECODING, ICodec.ID.CODEC_ID_VP6A);
 				}
 				else {
 					throw new RuntimeException("処理不能なコーデックを検知しました。" + vTag.getCodec());
