@@ -147,6 +147,8 @@ public class FlvSaveModule implements IOutputModule, ActionListener, KeyListener
 				saver.write(audioMshTag);
 				saver.write(videoMshTag);
 				saveButton.setText("stop");
+				fileButton.setEnabled(false);
+				fileField.setEnabled(false);
 			}
 			catch (Exception ex) {
 				logger.error("保存開始できませんでした。", ex);
@@ -154,8 +156,7 @@ public class FlvSaveModule implements IOutputModule, ActionListener, KeyListener
 		}
 		else if("stop".equals(e.getActionCommand())) {
 			logger.info("保存がおわったとき");
-			saver.close();
-			saveButton.setText("save");
+			stop();
 		}
 	}
 	@Override
@@ -170,5 +171,11 @@ public class FlvSaveModule implements IOutputModule, ActionListener, KeyListener
 		else {
 			saveButton.setEnabled(true);
 		}
+	}
+	public void stop() {
+		saver.close();
+		saveButton.setText("save");
+		fileField.setEnabled(true);
+		fileButton.setEnabled(true);
 	}
 }

@@ -28,7 +28,7 @@ public class FlvSavePlugin implements IPlugin {
 	}
 	@Override
 	public void onDeactivated() {
-		
+		module.stop();
 	}
 	@Override
 	public String toString() {
