@@ -16,6 +16,7 @@ import com.flazr.rtmp.message.Command;
 /**
  * 独自の配信制御
  * @author taktod
+ * rtmpPublisherも自作して、内部timerを１つにしてしまえばもっと動作は良くなると思われます。
  */
 public class MyRtmpPublisher extends RtmpPublisher {
 	/** netty用のtimer */
