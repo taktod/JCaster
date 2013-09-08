@@ -84,15 +84,22 @@ public class FlvDecoder implements Runnable {
 	public void run() {
 		try {
 			while(workingFlg) {
+				if(dataQueue.size() == 0) {
+					// threadのデータがなくなってきたら他のthreadの動作を促す。
+					Thread.yield();
+				}
 				Tag tag = dataQueue.take();
 				if(tag == null) {
 					break;
 				}
-				// デコーダーについて調査する。
-				checkDecoder(tag);
 				if(tag instanceof VideoTag) {
 					// 映像データの場合
 					VideoTag vTag = (VideoTag) tag;
+					if(vTag.getCodec() != CodecType.AVC) {
+						continue;
+					}
+					// デコーダーについて調査する。
+					checkDecoder(tag);
 					if(vTag.isMediaSequenceHeader()) {
 						// mshの場合はspsとppsを取得する。
 						ConfigData configData = new ConfigData();
