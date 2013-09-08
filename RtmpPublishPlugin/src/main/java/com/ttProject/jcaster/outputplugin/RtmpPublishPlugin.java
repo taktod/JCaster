@@ -42,7 +42,7 @@ public class RtmpPublishPlugin implements IPlugin {
 	 */
 	@Override
 	public void onDeactivated() {
-		
+		module.stop();
 	}
 	/**
 	 * 名前設定

@@ -145,12 +145,7 @@ public class RtmpPublishModule implements IOutputModule, ActionListener {
 		}
 		if("close".equals(e.getActionCommand())) {
 			logger.info("closeがおされました。");
-			sender.stop();
-			publishButton.setText("publish");
-			publishButton.setEnabled(false);
-			urlField.setEnabled(true);
-			nameField.setEnabled(true);
-			connectButton.setText("connect");
+			stop();
 		}
 		if("publish".equals(e.getActionCommand())) {
 			logger.info("publishがおされました。");
@@ -181,5 +176,16 @@ public class RtmpPublishModule implements IOutputModule, ActionListener {
 	 */
 	public String getStreamName() {
 		return nameField.getText();
+	}
+	/**
+	 * 非activeになったらすべて止めておく。
+	 */
+	public void stop() {
+		sender.stop();
+		publishButton.setText("publish");
+		publishButton.setEnabled(false);
+		urlField.setEnabled(true);
+		nameField.setEnabled(true);
+		connectButton.setText("connect");
 	}
 }
