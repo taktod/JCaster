@@ -156,7 +156,7 @@ public class MyClientHandler extends ClientHandler {
 				@SuppressWarnings("unchecked")
 				final Map<String, Object> temp = (Map<String, Object>)command.getArg(0);
 				final String code = (String)temp.get("code");
-				System.out.println(code);
+				logger.info(code);
 				if("NetStream.Publish.Start".equals(code)) {
 					logger.info("publish");
 					if(publisher != null && !publisher.isStarted()) {
