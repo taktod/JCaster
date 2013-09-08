@@ -21,6 +21,7 @@
     <module>FlvSavePlugin</module>
     <module>RtmpPublishPlugin</module>
     <module>PlayViewer</module>
+    <module>FlvReaderPlugin</module>
   </modules>
   <dependencies>
     <dependency>
