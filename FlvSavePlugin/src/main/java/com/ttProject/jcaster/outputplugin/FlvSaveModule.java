@@ -173,7 +173,9 @@ public class FlvSaveModule implements IOutputModule, ActionListener, KeyListener
 		}
 	}
 	public void stop() {
-		saver.close();
+		if(saver != null) {
+			saver.close();
+		}
 		saveButton.setText("save");
 		fileField.setEnabled(true);
 		fileButton.setEnabled(true);

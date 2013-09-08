@@ -181,7 +181,9 @@ public class RtmpPublishModule implements IOutputModule, ActionListener {
 	 * 非activeになったらすべて止めておく。
 	 */
 	public void stop() {
-		sender.stop();
+		if(sender != null) {
+			sender.stop();
+		}
 		publishButton.setText("publish");
 		publishButton.setEnabled(false);
 		urlField.setEnabled(true);
