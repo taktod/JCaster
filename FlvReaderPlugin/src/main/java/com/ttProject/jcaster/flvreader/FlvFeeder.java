@@ -31,7 +31,7 @@ public class FlvFeeder {
 	private long startTime = -1;
 	/** 変換モジュール */
 	private IMixerModule targetModule;
-	private final TagAnalyzer analyzer = new TagAnalyzer();
+	private FlvTagAnalyzer analyzer = null;
 	/**
 	 * 全体の情報応答
 	 * @return
@@ -66,6 +66,7 @@ public class FlvFeeder {
 		int lastTagSize = BufferUtil.safeRead(source, 4).getInt();
 		int lastTagPos = source.size() - 4 - lastTagSize;
 		source.position(lastTagPos);
+		TagAnalyzer analyzer = new TagAnalyzer();
 		Tag tag = analyzer.analyze(source);
 		totalDuration = tag.getTimestamp(); // 最終タグの時刻位置を最終サイズとします。
 	}
@@ -77,6 +78,7 @@ public class FlvFeeder {
 		// flvのヘッダを解析します。
 		FlvHeader flvHeader = new FlvHeader();
 		flvHeader.analyze(source);
+		analyzer = new FlvTagAnalyzer(startTimestamp);
 		Tag tag = null;
 		while((tag = analyzer.analyze(source)) != null) {
 			System.out.println(tag);
@@ -113,7 +115,7 @@ public class FlvFeeder {
 	 * @return
 	 */
 	public synchronized boolean onTimerEvent() {
-		if(source == null) {
+		if(source == null || analyzer == null) {
 			return false;
 		}
 		if(startTime < 0) {
