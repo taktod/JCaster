@@ -32,6 +32,7 @@ public class FlvFeeder {
 	/** 変換モジュール */
 	private IMixerModule targetModule;
 	private FlvTagAnalyzer analyzer = null;
+	private boolean videoFlg = false; // 映像があるかどうかフラグ
 	/**
 	 * 全体の情報応答
 	 * @return
@@ -78,10 +79,10 @@ public class FlvFeeder {
 		// flvのヘッダを解析します。
 		FlvHeader flvHeader = new FlvHeader();
 		flvHeader.analyze(source);
+		videoFlg = flvHeader.hasVideo();
 		analyzer = new FlvTagAnalyzer(startTimestamp);
 		Tag tag = null;
 		while((tag = analyzer.analyze(source)) != null) {
-			System.out.println(tag);
 			if(tag instanceof AudioTag) {
 				AudioTag aTag = (AudioTag) tag;
 				if(aTag.getCodec() == CodecType.AAC && aTag.isMediaSequenceHeader()) {
@@ -90,6 +91,7 @@ public class FlvFeeder {
 				}
 			}
 			if(tag instanceof VideoTag) {
+				videoFlg = true;
 				VideoTag vTag = (VideoTag) tag;
 				if(vTag.getCodec() == CodecType.AVC && vTag.isMediaSequenceHeader()) {
 					tagList.addLast(vTag);
@@ -97,10 +99,24 @@ public class FlvFeeder {
 				}
 			}
 			// mshをみつけたら保持しておく必要あり。
+			// もしvideoFlgがたっている場合は動画のkeyFrameから始めるべき
 			if(tag.getTimestamp() >= startTimestamp) {
-				// 見つけたタグは始めのデータなので、追記しておく。
-				tagList.addLast(tag);
-				break;
+				if(videoFlg) {
+					// 映像がある場合
+					// キーフレームからはじめたい。
+					if(tag instanceof VideoTag) {
+						VideoTag vTag = (VideoTag) tag;
+						if(vTag.isKeyFrame()) {
+							tagList.addLast(tag);
+							break;
+						}
+					}
+				}
+				else {
+					// 映像がない場合
+					tagList.addLast(tag);
+					break;
+				}
 			}
 		}
 		if(startTimestamp == 0) {
@@ -126,7 +142,6 @@ public class FlvFeeder {
 			long currentPos = System.currentTimeMillis() - startTime;
 			Tag tag = null;
 			while((tag = analyzer.analyze(source)) != null) {
-				System.out.println(tag);
 				tagList.addLast(tag);
 				if(tag.getTimestamp() > currentPos) {
 					// 今回送信すべきデータ分送信がおわっているなら、ここまでとする。
@@ -139,7 +154,6 @@ public class FlvFeeder {
 				// データがtagListにある場合はこのデータを送信しておく。
 				passedTimestamp = listedTag.getTimestamp();
 				if(targetModule != null) {
-					logger.info("送信tag:" + listedTag);
 					targetModule.setData(Media.FlvTag, listedTag);
 				}
 			}
