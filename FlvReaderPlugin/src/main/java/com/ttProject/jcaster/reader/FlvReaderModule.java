@@ -196,15 +196,20 @@ public class FlvReaderModule implements IInputModule, ActionListener, KeyListene
 			}
 		}
 		if("stop".equals(event.getActionCommand())) {
+			stop();
+		}
+	}
+	public void stop() {
+		if(feeder != null) {
 			feeder.close();
 			feeder = null;
-			// このタイミングでもう一度初期化しておかないと再開始できない。
-			setupFeeder();
-			logger.info("stopボタンが押されました。");
-			fileField.setEnabled(true);
-			fileButton.setEnabled(true);
-			playButton.setText("play");
 		}
+		// このタイミングでもう一度初期化しておかないと再開始できない。
+		setupFeeder();
+		logger.info("stopボタンが押されました。");
+		fileField.setEnabled(true);
+		fileButton.setEnabled(true);
+		playButton.setText("play");
 	}
 	private void setupFeeder() {
 		try {

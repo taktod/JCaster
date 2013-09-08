@@ -44,7 +44,7 @@ public class Mp4ReaderPlugin implements IPlugin {
 	 */
 	@Override
 	public void onDeactivated() {
-		
+		module.stop();
 	}
 	/**
 	 * 名前応答

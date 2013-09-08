@@ -166,15 +166,19 @@ public class Mp4ReaderModule implements IInputModule, ActionListener, KeyListene
 			}
 		}
 		if("stop".equals(event.getActionCommand())) {
+			// このタイミングでもう一度初期化しておかないと再開始できない。
+			stop();
+		}
+	}
+	public void stop() {
+		if(feeder != null) {
 			feeder.close();
 			feeder = null;
-			// このタイミングでもう一度初期化しておかないと再開始できない。
-			setupFeeder();
-			logger.info("stopボタンが押されました。");
-			fileField.setEnabled(true);
-			fileButton.setEnabled(true);
-			playButton.setText("play");
 		}
+		setupFeeder();
+		fileField.setEnabled(true);
+		fileButton.setEnabled(true);
+		playButton.setText("play");
 	}
 	/**
 	 * swingのキーイベント

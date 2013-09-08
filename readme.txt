@@ -18,7 +18,7 @@ LGPL
  Mp4ReaderPlugin:mp4のデータを読み取る
  NoMixerPlugin:なにもmixしないmixer
  RtmpPublishPlugin:rtmpでデータを配信する
- FlvReaderPlugin:flvのデータを読み取る(シーク動作や頭出し等に難あり)
+ FlvReaderPlugin:flvのデータを読み取る(シーク動作がまだ遅い)
 
 GPL
  playViewer:再生中のデータ確認 xuggle利用 GPL(作成中)
