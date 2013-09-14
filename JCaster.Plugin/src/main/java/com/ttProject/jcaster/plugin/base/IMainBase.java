@@ -30,8 +30,10 @@ public interface IMainBase {
 	 * @author taktod
 	 */
 	public enum Media {
-		RawAudio,
-		Image,
-		FlvTag
+		AudioData, // myLib.media.rawのAudioData
+		Image, // BufferedImage
+		FlvTag, // flvTag
+		VideoPicture, // xuggleのpicture
+		AudioSamples // xuggleのsamples
 	}
 }
