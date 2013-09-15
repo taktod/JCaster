@@ -62,6 +62,13 @@ public class FlvVideoDecoder implements Runnable {
 		worker.start();
 	}
 	/**
+	 * audioDecoderを更新する
+	 * @param audioDecoder
+	 */
+	public void setAudioDecoder(FlvAudioDecoder audioDecoder) {
+		this.audioDecoder = audioDecoder;
+	}
+	/**
 	 * コンポーネント参照
 	 * @return
 	 */
@@ -99,7 +106,8 @@ public class FlvVideoDecoder implements Runnable {
 				while(offset < packet.getSize()) {
 					int bytesDecoded = videoDecoder.decodeVideo(picture, packet, offset);
 					if(bytesDecoded < 0) {
-						throw new Exception("映像のデコード中に問題が発生しました。");
+//						throw new Exception("映像のデコード中に問題が発生しました。");
+						break;
 					}
 					offset += bytesDecoded;
 					if(picture.isComplete()) {
@@ -150,6 +158,7 @@ public class FlvVideoDecoder implements Runnable {
 	 * 映像を更新する。
 	 */
 	private void updatePicture() {
+		// 最終音声の位置から、timestampが移動していなかった場合音声データが途絶えたと考えていいと思う。
 		long timestamp = audioDecoder.getTimestamp();
 		VideoData videoData = null;
 		while(videoDataQueue.size() != 0) {
