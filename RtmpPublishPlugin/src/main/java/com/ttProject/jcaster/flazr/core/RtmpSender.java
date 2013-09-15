@@ -324,6 +324,7 @@ public class RtmpSender implements RtmpReader {
 			// 始めのデータである場合
 			// 現在の位置を開始位置に設定して、動作をさせる。
 			processPos = tag.getTimestamp();
+			savePos = 0;
 		}
 		else if(Math.abs((processPos - tag.getTimestamp())) > 200){
 			// 前後のticが200以上離れている場合は、なんらかの理由でやり直しになった。
