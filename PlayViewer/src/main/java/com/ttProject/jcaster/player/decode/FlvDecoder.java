@@ -16,6 +16,7 @@ import com.ttProject.media.flv.tag.VideoTag;
  */
 public class FlvDecoder {
 	/** 動作ロガー */
+	@SuppressWarnings("unused")
 	private final Logger logger = Logger.getLogger(FlvDecoder.class);
 	private final VideoComponent component = new VideoComponent();
 	private FlvVideoDecoder videoDecoder;
