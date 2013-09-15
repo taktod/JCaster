@@ -1,5 +1,7 @@
 package com.ttProject.jcaster.player.decode;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.sound.sampled.AudioFormat;
@@ -42,6 +44,9 @@ public class FlvAudioDecoder implements Runnable {
 	private AudioTag lastAudioTag = null;
 	/** 音声デコーダー */
 	private IStreamCoder audioDecoder = null;
+	/** はじめのaudioTagの位置設定 */
+	private long startTimestamp = -1; // はじめのaudioTagの位置を設定
+	private int vuLevel = 0;
 	/**
 	 * コンストラクタ
 	 */
@@ -61,7 +66,24 @@ public class FlvAudioDecoder implements Runnable {
 		if(audioLine == null) {
 			return -1;
 		}
-		return audioLine.getMicrosecondPosition() / 1000;
+		return audioLine.getMicrosecondPosition() / 1000 + startTimestamp;
+	}
+	/**
+	 * 音声レベルを応答する
+	 * @return
+	 */
+	public int getVolumeLevel() {
+		if(audioLine == null) {
+			return 0;
+		}
+		return vuLevel; // コレじゃない感がすごいw
+	}
+	/**
+	 * 音量を設定する0 〜 100
+	 * @param volume
+	 */
+	public void setVolume(int volume) {
+		this.volume = volume;
 	}
 	/**
 	 * 処理すべきtagを追加する
@@ -69,6 +91,9 @@ public class FlvAudioDecoder implements Runnable {
 	 */
 	public void addTag(Tag tag) {
 		if(tag instanceof AudioTag) {
+			if(startTimestamp == -1) {
+				startTimestamp = tag.getTimestamp();
+			}
 			dataQueue.add((AudioTag)tag);
 		}
 	}
@@ -129,16 +154,18 @@ public class FlvAudioDecoder implements Runnable {
 						 * すでに完了した経過時間を計算しておいて、経過時間とtagのtimestampが一致しない場合は無音用のデータを挿入する必要あり。
 						 * 下記の計算では、毎回0.032ほどずれたままになっていた。よって一致しない。
 						 */
-//						System.out.println(passedSamples / 44100.0 * 1000);
-//						System.out.println(tag.getTimestamp());
-//						System.out.println(tag.getTimestamp() - (passedSamples / 44.1f));
 						// まずはサンプリング数を計算しておくことにする。
-						// TODO byteBufferでつくってvolumeを調整する必要あり。
-						byte[] rawBytes = samples.getData().getByteArray(0, samples.getSize());
-						if(audioLine != null) {
-							audioLine.write(rawBytes, 0, samples.getSize());
+						ByteBuffer buffer = samples.getByteBuffer();
+						buffer.order(ByteOrder.LITTLE_ENDIAN);
+						ByteBuffer volumedBuffer = ByteBuffer.allocate(samples.getSize());
+						volumedBuffer.order(ByteOrder.LITTLE_ENDIAN);
+						while(buffer.remaining() > 1) {
+							volumedBuffer.putShort((short)(buffer.getShort() * volume / 100));
 						}
-//						passedSamples += rawBytes.length / 4;
+						volumedBuffer.flip();
+						if(audioLine != null) {
+							audioLine.write(volumedBuffer.array(), 0, samples.getSize());
+						}
 					}
 				}
 			}
@@ -154,5 +181,6 @@ public class FlvAudioDecoder implements Runnable {
 			audioDecoder.close();
 			audioDecoder = null;
 		}
+		vuLevel = 0;
 	}
 }
