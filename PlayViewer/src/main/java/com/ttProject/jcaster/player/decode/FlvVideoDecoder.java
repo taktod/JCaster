@@ -151,13 +151,10 @@ public class FlvVideoDecoder implements Runnable {
 	 */
 	private void updatePicture() {
 		long timestamp = audioDecoder.getTimestamp();
-		if(timestamp == -1) {
-			return;
-		}
 		VideoData videoData = null;
 		while(videoDataQueue.size() != 0) {
 			VideoData vData = videoDataQueue.getFirst();
-			if(vData.getTimestamp() > timestamp) {
+			if(timestamp != -1 && vData.getTimestamp() > timestamp) {
 				break;
 			}
 			videoData = videoDataQueue.removeFirst();
