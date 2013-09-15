@@ -43,8 +43,15 @@ public class FlvVideoDecoder implements Runnable {
 	 * @param audioDecoder
 	 */
 	public FlvVideoDecoder(FlvAudioDecoder audioDecoder) {
+		this(audioDecoder, new VideoComponent());
+	}
+	/**
+	 * コンストラクタ
+	 * @param audioDecoder
+	 */
+	public FlvVideoDecoder(FlvAudioDecoder audioDecoder, VideoComponent component) {
 		this.audioDecoder = audioDecoder;
-		component = new VideoComponent();
+		this.component = component;
 		dataQueue = new LinkedBlockingQueue<VideoTag>();
 		packetizer = new FlvPacketizer();
 		videoDataQueue = new LinkedList<VideoData>();
@@ -54,6 +61,10 @@ public class FlvVideoDecoder implements Runnable {
 		worker.setPriority(1);
 		worker.start();
 	}
+	/**
+	 * コンポーネント参照
+	 * @return
+	 */
 	public VideoComponent getComponent() {
 		return component;
 	}
@@ -93,6 +104,7 @@ public class FlvVideoDecoder implements Runnable {
 					offset += bytesDecoded;
 					if(picture.isComplete()) {
 						IVideoPicture newPic = picture;
+						// フレームのスキップを実装しておかないと、処理の重いフレームにあたるとアウトになる。
 						if(tag.getTimestamp() < nextAcceptVideoTimestamp) {
 //							System.out.println("時間がかかりすぎているので、スキップする。");
 							continue;
@@ -120,6 +132,19 @@ public class FlvVideoDecoder implements Runnable {
 		catch (Exception e) {
 			logger.error("映像デコード処理で失敗しました。", e);
 		}
+		if(videoDecoder != null) {
+			videoDecoder.close();
+			videoDecoder = null;
+		}
+		videoDataQueue.clear();
+	}
+	/**
+	 * 停止処理
+	 */
+	public void close() {
+		dataQueue.clear();
+		workingFlg = false;
+		worker.interrupt();
 	}
 	/**
 	 * 映像を更新する。
@@ -129,13 +154,10 @@ public class FlvVideoDecoder implements Runnable {
 		if(timestamp == -1) {
 			return;
 		}
-//		System.out.println("al:" + timestamp);
 		VideoData videoData = null;
-//		System.out.println("vdq:" + videoDataQueue);
 		while(videoDataQueue.size() != 0) {
 			VideoData vData = videoDataQueue.getFirst();
 			if(vData.getTimestamp() > timestamp) {
-//				System.out.println("vd:" + vData.getTimestamp());
 				break;
 			}
 			videoData = videoDataQueue.removeFirst();

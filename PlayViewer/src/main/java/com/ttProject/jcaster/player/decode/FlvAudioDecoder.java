@@ -72,6 +72,20 @@ public class FlvAudioDecoder implements Runnable {
 			dataQueue.add((AudioTag)tag);
 		}
 	}
+	/**
+	 * 停止処理
+	 */
+	public void close() {
+		// queueの中身をクリアします。
+		dataQueue.clear();
+		// threadの停止を促します。
+		workingFlg = false;
+		// ロックされている部分は解放しておく。
+		worker.interrupt();
+	}
+	/**
+	 * 処理
+	 */
 	@Override
 	public void run() {
 		try {
@@ -113,6 +127,7 @@ public class FlvAudioDecoder implements Runnable {
 						// TODO サンプリングデータ量と無音空間を計算して、無音部がある場合は挿入する必要あり。
 						/*
 						 * すでに完了した経過時間を計算しておいて、経過時間とtagのtimestampが一致しない場合は無音用のデータを挿入する必要あり。
+						 * 下記の計算では、毎回0.032ほどずれたままになっていた。よって一致しない。
 						 */
 //						System.out.println(passedSamples / 44100.0 * 1000);
 //						System.out.println(tag.getTimestamp());
@@ -130,6 +145,14 @@ public class FlvAudioDecoder implements Runnable {
 		}
 		catch (Exception e) {
 			logger.error("処理に失敗しました。", e);
+		}
+		if(audioLine != null) {
+			audioLine.close();
+			audioLine = null;
+		}
+		if(audioDecoder != null) {
+			audioDecoder.close();
+			audioDecoder = null;
 		}
 	}
 }
