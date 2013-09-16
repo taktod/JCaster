@@ -142,7 +142,9 @@ public class Mp4ReaderModule implements IInputModule, ActionListener, KeyListene
 		}
 		if("file".equals(event.getActionCommand())) {
 			JFileChooser fileChooser = new JFileChooser();
-			fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("mp4 file", "mp4", "m4a"));
+			FileNameExtensionFilter fileFilter = new FileNameExtensionFilter("mp4 file", "mp4", "m4a");
+			fileChooser.addChoosableFileFilter(fileFilter);
+			fileChooser.setFileFilter(fileFilter);
 			int selected = fileChooser.showOpenDialog(mainbase.getMainFrame());
 			if(selected == JFileChooser.APPROVE_OPTION) {
 				File file = fileChooser.getSelectedFile();

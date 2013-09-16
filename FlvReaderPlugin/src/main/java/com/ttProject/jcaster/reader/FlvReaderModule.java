@@ -172,7 +172,9 @@ public class FlvReaderModule implements IInputModule, ActionListener, KeyListene
 		}
 		if("file".equals(event.getActionCommand())) {
 			JFileChooser fileChooser = new JFileChooser();
-			fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("flv file", "flv"));
+			FileNameExtensionFilter fileFilter = new FileNameExtensionFilter("flv file", "flv");
+			fileChooser.addChoosableFileFilter(fileFilter);
+			fileChooser.setFileFilter(fileFilter);
 			int selected = fileChooser.showOpenDialog(mainbase.getMainFrame());
 			if(selected == JFileChooser.APPROVE_OPTION) {
 				File file = fileChooser.getSelectedFile();
