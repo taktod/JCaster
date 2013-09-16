@@ -43,6 +43,15 @@ public class MainFrame extends JFrame {
 	 */
 	public MainFrame() {
 		mainController = new MainController(this);
+		Thread shutdown = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				// shutdownを実行していく。
+				mainController.onShutdown();
+			}
+		});
+		shutdown.setDaemon(false);
+		Runtime.getRuntime().addShutdownHook(shutdown);
 	}
 	/**
 	 * データのセットアップ

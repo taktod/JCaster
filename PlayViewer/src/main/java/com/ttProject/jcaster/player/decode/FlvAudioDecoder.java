@@ -13,6 +13,7 @@ import org.apache.log4j.Logger;
 
 import com.ttProject.media.flv.Tag;
 import com.ttProject.media.flv.tag.AudioTag;
+import com.ttProject.util.BufferUtil;
 import com.ttProject.xuggle.flv.FlvPacketizer;
 import com.xuggle.xuggler.IAudioSamples;
 import com.xuggle.xuggler.IPacket;
@@ -47,6 +48,7 @@ public class FlvAudioDecoder implements Runnable {
 	/** はじめのaudioTagの位置設定 */
 	private long startTimestamp = -1; // はじめのaudioTagの位置を設定
 	private int vuLevel = 0;
+	private IAudioSamples samples = null;
 	/**
 	 * コンストラクタ
 	 */
@@ -133,7 +135,6 @@ public class FlvAudioDecoder implements Runnable {
 					audioFormat = new AudioFormat(audioDecoder.getSampleRate(),
 							(int)IAudioSamples.findSampleBitDepth(audioDecoder.getSampleFormat()),
 							audioDecoder.getChannels(), true, false);
-					System.out.println(audioFormat);
 					DataLine.Info info = new DataLine.Info(SourceDataLine.class, audioFormat);
 					audioLine = (SourceDataLine)AudioSystem.getLine(info);
 					audioLine.open(audioFormat);
@@ -141,7 +142,9 @@ public class FlvAudioDecoder implements Runnable {
 				}
 				lastAudioTag = tag;
 				int offset = 0;
-				IAudioSamples samples = IAudioSamples.make(1024, audioDecoder.getChannels());
+//				if(samples == null) {
+					samples = IAudioSamples.make(1024, audioDecoder.getChannels());
+//				}
 				while(offset < packet.getSize()) {
 					int bytesDecoded = audioDecoder.decodeAudio(samples, packet, offset);
 					if(bytesDecoded < 0) {
@@ -164,8 +167,10 @@ public class FlvAudioDecoder implements Runnable {
 						}
 						volumedBuffer.flip();
 						if(audioLine != null) {
-							audioLine.write(volumedBuffer.array(), 0, samples.getSize());
+							audioLine.write(BufferUtil.toByteArray(volumedBuffer), 0, samples.getSize());
+//							audioLine.write(volumedBuffer.array(), 0, samples.getSize());
 						}
+//						samples = null;
 					}
 				}
 			}
@@ -181,6 +186,14 @@ public class FlvAudioDecoder implements Runnable {
 			audioDecoder.close();
 			audioDecoder = null;
 		}
+		samples = null;
 		vuLevel = 0;
+	}
+	public void onShutdown() {
+		if(audioDecoder != null) {
+			audioDecoder.close();
+			audioDecoder = null;
+		}
+		close();
 	}
 }

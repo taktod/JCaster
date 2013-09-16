@@ -36,7 +36,7 @@ public class FlvVideoDecoder implements Runnable {
 	private IStreamCoder videoDecoder = null;
 	private FlvAudioDecoder audioDecoder;
 	private final LinkedList<VideoData> videoDataQueue;
-	
+	private IVideoPicture picture;
 	private long nextAcceptVideoTimestamp = -1;
 	/**
 	 * コンストラクタ
@@ -102,8 +102,10 @@ public class FlvVideoDecoder implements Runnable {
 				}
 				lastVideoTag = tag;
 				int offset = 0;
-				IVideoPicture picture = IVideoPicture.make(videoDecoder.getPixelType(), videoDecoder.getWidth(), videoDecoder.getHeight());
 				while(offset < packet.getSize()) {
+					if(picture == null) {
+						picture = IVideoPicture.make(videoDecoder.getPixelType(), videoDecoder.getWidth(), videoDecoder.getHeight());
+					}
 					int bytesDecoded = videoDecoder.decodeVideo(picture, packet, offset);
 					if(bytesDecoded < 0) {
 //						throw new Exception("映像のデコード中に問題が発生しました。");
@@ -132,6 +134,7 @@ public class FlvVideoDecoder implements Runnable {
 						if(nextAcceptVideoTimestamp < 40 + tag.getTimestamp()) {
 							nextAcceptVideoTimestamp = 40 + tag.getTimestamp();
 						}
+						picture = null;
 					}
 				}
 				updatePicture();
@@ -171,5 +174,12 @@ public class FlvVideoDecoder implements Runnable {
 		if(videoData != null) {
 			component.setImage(videoData.getImage());
 		}
+	}
+	public void onShutdown() {
+		if(videoDecoder != null) {
+			videoDecoder.close();
+			videoDecoder = null;
+		}
+		close();
 	}
 }

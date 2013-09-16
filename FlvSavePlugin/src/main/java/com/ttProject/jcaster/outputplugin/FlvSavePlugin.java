@@ -34,4 +34,8 @@ public class FlvSavePlugin implements IPlugin {
 	public String toString() {
 		return "FlvSave";
 	}
+	@Override
+	public void onShutdown() {
+		
+	}
 }

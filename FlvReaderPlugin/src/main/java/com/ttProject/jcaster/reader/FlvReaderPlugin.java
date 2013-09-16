@@ -28,4 +28,8 @@ public class FlvReaderPlugin implements IPlugin {
 	public String toString() {
 		return "FlvReader";
 	}
+	@Override
+	public void onShutdown() {
+		
+	}
 }

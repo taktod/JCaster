@@ -22,6 +22,10 @@
     <module>RtmpPublishPlugin</module>
     <module>PlayViewer</module>
     <module>FlvReaderPlugin</module>
+
+
+
+    <module>EncodeMixerPlugin</module>
   </modules>
   <dependencies>
     <dependency>

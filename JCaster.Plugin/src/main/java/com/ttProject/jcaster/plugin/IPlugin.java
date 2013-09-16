@@ -34,4 +34,5 @@ public interface IPlugin {
 		Mixer,
 		Viewer
 	}
+	public void onShutdown();
 }

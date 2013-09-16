@@ -98,4 +98,8 @@ public class FlvDecoder {
 			videoDecoder.addTag(tag);
 		}
 	}
+	public void onShutdown() {
+		videoDecoder.onShutdown();
+		audioDecoder.onShutdown();
+	}
 }

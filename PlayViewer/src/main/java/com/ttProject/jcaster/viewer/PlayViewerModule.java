@@ -234,4 +234,7 @@ public class PlayViewerModule implements IViewerModule, IOutputModule {
 			decoder.addTag(tag);
 		}
 	}
+	public void onShutdown() {
+		decoder.onShutdown();
+	}
 }

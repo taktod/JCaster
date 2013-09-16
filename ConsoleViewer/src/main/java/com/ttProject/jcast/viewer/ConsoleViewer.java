@@ -108,4 +108,8 @@ public class ConsoleViewer implements IViewerPlugin, ActionListener {
 			textarea.setText("");
 		}
 	}
+	@Override
+	public void onShutdown() {
+		
+	}
 }
