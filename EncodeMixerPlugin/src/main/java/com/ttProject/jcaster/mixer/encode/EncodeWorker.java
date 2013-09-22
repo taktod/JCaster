@@ -4,6 +4,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import com.ttProject.jcaster.plugin.base.IMainBase.Media;
 import com.ttProject.jcaster.plugin.module.IOutputModule;
+import com.ttProject.media.flv.FlvTagOrderManager;
 import com.ttProject.media.flv.Tag;
 import com.ttProject.media.flv.tag.AudioTag;
 import com.ttProject.media.flv.tag.VideoTag;
@@ -22,6 +23,7 @@ import com.xuggle.xuggler.IVideoResampler;
  * エンコードを実行する処理
  * @author taktod
  * とりあえず変換できて再生もできたけど、timestampのswapとかあるのでソートしてやらないとだめ。
+ * データのソートは出力モジュールでやればいいかも・・・っておもった。
  */
 public class EncodeWorker implements Runnable {
 	/** データを保持しておくqueue */
@@ -35,6 +37,8 @@ public class EncodeWorker implements Runnable {
 	private FlvDepacketizer flvDepacketizer = new FlvDepacketizer();
 	private IStreamCoder encoder = null;
 	private IOutputModule target = null;
+	
+	public static FlvTagOrderManager orderManager = null;
 	/**
 	 * コンストラクタ
 	 */
@@ -82,24 +86,32 @@ public class EncodeWorker implements Runnable {
 			while(workingFlg) {
 				Object mediaData = mediaDataQueue.take();
 				if(mediaData instanceof VideoTag) {
+					orderManager.setVideoEndFlg(false);
 					// videoTagなのでVideoPictureに変換したいところ
 					videoTagToVideoPicture((VideoTag) mediaData);
 				}
 				else if(mediaData instanceof AudioTag) {
+					orderManager.setAudioEndFlg(false);
 					audioTagToAudioSamples((AudioTag) mediaData);
 				}
 				else if(mediaData instanceof VideoData) {
-					
+					orderManager.setVideoEndFlg(false);
+					// 今度はここやりたい。
+					videoDataToVideoPicture((VideoData) mediaData);
 				}
 				else if(mediaData instanceof AudioData) {
-					
+					orderManager.setAudioEndFlg(false);
+					audioDataToAudioSamples((AudioData) mediaData);
 				}
 				else if(mediaData instanceof IVideoPicture) {
+					orderManager.setVideoEndFlg(false);
 					// TODO まだ未検証
 					videoPictureToFlvTag((IVideoPicture) mediaData);
 				}
 				else if(mediaData instanceof IAudioSamples) {
-					
+					orderManager.setAudioEndFlg(false);
+					// TODO まだ未検証
+					audioSampleToFlvTag((IAudioSamples) mediaData);
 				}
 			}
 		}
@@ -204,8 +216,11 @@ public class EncodeWorker implements Runnable {
 		if(packet.isComplete()) {
 			for(Tag tag : flvDepacketizer.getTag(encoder, packet)) {
 				if(target != null) {
-					synchronized(target) {
-						target.setMixedData(tag);
+					synchronized(orderManager) {
+//						orderManager.addTag(tag);
+//						for(Tag t : orderManager.getCompleteTags()) {
+							target.setMixedData(tag);
+//						}
 					}
 				}
 			}
@@ -233,8 +248,11 @@ public class EncodeWorker implements Runnable {
 			if(packet.isComplete()) {
 				for(Tag tag : flvDepacketizer.getTag(encoder, packet)) {
 					if(target != null) {
-						synchronized(target) {
-							target.setMixedData(tag);
+						synchronized (orderManager) {
+//							orderManager.addTag(tag);
+//							for(Tag t : orderManager.getCompleteTags()) {
+								target.setMixedData(tag);
+//							}
 						}
 					}
 				}

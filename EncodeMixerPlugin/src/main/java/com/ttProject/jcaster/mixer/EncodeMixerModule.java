@@ -14,6 +14,7 @@ import com.ttProject.jcaster.plugin.base.BaseHandler;
 import com.ttProject.jcaster.plugin.base.ISwingMainBase;
 import com.ttProject.jcaster.plugin.module.IMixerModule;
 import com.ttProject.jcaster.plugin.module.IOutputModule;
+import com.ttProject.media.flv.FlvTagOrderManager;
 import com.ttProject.media.flv.tag.AudioTag;
 import com.ttProject.media.flv.tag.VideoTag;
 import com.ttProject.media.raw.AudioData;
@@ -42,11 +43,15 @@ public class EncodeMixerModule implements IMixerModule {
 		if(audioWorker != null) {
 			audioWorker.close();
 		}
+		EncodeWorker.orderManager = null;
 	}
 	/**
 	 * セットアップ
 	 */
 	public void setup() {
+		EncodeWorker.orderManager = new FlvTagOrderManager();
+		EncodeWorker.orderManager.setNomoreAudio();
+		EncodeWorker.orderManager.setNomoreVideo();
 		videoWorker = new EncodeWorker();
 		videoWorker.setOutputTarget(targetModule);
 		
@@ -121,11 +126,13 @@ public class EncodeMixerModule implements IMixerModule {
 		videoWorker.setOutputTarget(targetModule);
 		audioWorker.setOutputTarget(targetModule);
 	}
+	// 出力データのオーダーを並べ替えるには、どういうデータがながれているか知っておく必要あり。
 	/**
 	 * データを入力モジュールから受け取ったときの動作
 	 */
 	@Override
 	public void setData(Media media, Object mediaData) {
+		// TODO ここでデータを監視して、リセットされたときに元に戻す必要がありそうだ。timestampが大きくずれているときの処理
 		// モジュールの受け渡し(変換が必要な場合)は各threadにやらせる。(大本のthreadには悪影響を与えたくないため。)
 		if(mediaData instanceof VideoTag) {
 			if(videoWorker != null) {
