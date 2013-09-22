@@ -150,6 +150,7 @@ public class FlvVideoDecoder implements Runnable {
 	 * 停止処理
 	 */
 	public void close() {
+		System.out.println("停止処理");
 		dataQueue.clear();
 		workingFlg = false;
 		worker.interrupt();

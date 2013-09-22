@@ -31,7 +31,7 @@ public interface IMainBase {
 	 */
 	public enum Media {
 		AudioData, // myLib.media.rawのAudioData
-		Image, // BufferedImage
+		VideoData, // myLib.media.rawのVideoData
 		FlvTag, // flvTag
 		VideoPicture, // xuggleのpicture
 		AudioSamples // xuggleのsamples

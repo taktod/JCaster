@@ -14,7 +14,6 @@
   <modules>
     <module>JCaster.Plugin</module>
     <module>JCaster</module>
-    
     <module>ConsoleViewer</module>
     <module>Mp4ReaderPlugin</module>
     <module>NoMixerPlugin</module>
@@ -22,6 +21,7 @@
     <module>RtmpPublishPlugin</module>
     <module>PlayViewer</module>
     <module>FlvReaderPlugin</module>
+    <module>EncodeMixerPlugin</module>
   </modules>
   <dependencies>
     <dependency>

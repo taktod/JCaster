@@ -52,6 +52,7 @@ public class FlvDecoder {
 		}
 	}
 	public void resetDecoder() {
+		System.out.println("このリセットがはしっています。");
 		resetAudioDecoder();
 		resetVideoDecoder();
 		started = false;
