@@ -20,6 +20,11 @@ import com.ttProject.media.raw.AudioData;
 import com.ttProject.media.raw.VideoData;
 import com.ttProject.swing.component.GroupLayoutEx;
 import com.xuggle.xuggler.IAudioSamples;
+import com.xuggle.xuggler.ICodec;
+import com.xuggle.xuggler.IPixelFormat;
+import com.xuggle.xuggler.IRational;
+import com.xuggle.xuggler.IStreamCoder;
+import com.xuggle.xuggler.IStreamCoder.Direction;
 import com.xuggle.xuggler.IVideoPicture;
 
 public class EncodeMixerModule implements IMixerModule {
@@ -44,8 +49,35 @@ public class EncodeMixerModule implements IMixerModule {
 	public void setup() {
 		videoWorker = new EncodeWorker();
 		videoWorker.setOutputTarget(targetModule);
+		
+		IStreamCoder encoder = IStreamCoder.make(Direction.ENCODING, ICodec.ID.CODEC_ID_FLV1);
+		IRational frameRate = IRational.make(15, 1); // 15fps
+		encoder.setNumPicturesInGroupOfPictures(30); // gopを30にしておく。keyframeが30枚ごとになる。
+		encoder.setBitRate(650000); // 650kbps
+		encoder.setBitRateTolerance(9000);
+		encoder.setPixelType(IPixelFormat.Type.YUV420P);
+		encoder.setWidth(320);
+		encoder.setHeight(240);
+		encoder.setGlobalQuality(10);
+		encoder.setFrameRate(frameRate);
+		encoder.setTimeBase(IRational.make(1, 1000)); // 1/1000設定(flvはこうなるべき)
+		if(encoder.open(null, null) < 0) {
+			throw new RuntimeException("エンコーダーが開けませんでした。");
+		}
+		videoWorker.setEncoder(encoder);
+		
 		audioWorker = new EncodeWorker();
 		audioWorker.setOutputTarget(targetModule);
+		
+		encoder = IStreamCoder.make(Direction.ENCODING, ICodec.ID.CODEC_ID_AAC);
+		encoder.setSampleRate(44100);
+		encoder.setChannels(2);
+		encoder.setBitRate(96000);
+		if(encoder.open(null, null) < 0) {
+			throw new RuntimeException("変換コーダーが開けませんでした。");
+		}
+		audioWorker.setEncoder(encoder);
+		
 		logger.info("データを変換するmixerの初期化");
 		ISwingMainBase mainbase = BaseHandler.getISwingMainBase();
 		if(mainbase == null) {

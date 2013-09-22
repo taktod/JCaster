@@ -11,19 +11,17 @@ import com.ttProject.media.raw.AudioData;
 import com.ttProject.media.raw.VideoData;
 import com.ttProject.xuggle.flv.FlvDepacketizer;
 import com.ttProject.xuggle.flv.FlvPacketizer;
+import com.xuggle.xuggler.IAudioResampler;
 import com.xuggle.xuggler.IAudioSamples;
-import com.xuggle.xuggler.ICodec;
 import com.xuggle.xuggler.IPacket;
-import com.xuggle.xuggler.IPixelFormat;
-import com.xuggle.xuggler.IRational;
 import com.xuggle.xuggler.IStreamCoder;
 import com.xuggle.xuggler.IVideoPicture;
-import com.xuggle.xuggler.IStreamCoder.Direction;
 import com.xuggle.xuggler.IVideoResampler;
 
 /**
  * エンコードを実行する処理
  * @author taktod
+ * とりあえず変換できて再生もできたけど、timestampのswapとかあるのでソートしてやらないとだめ。
  */
 public class EncodeWorker implements Runnable {
 	/** データを保持しておくqueue */
@@ -46,25 +44,12 @@ public class EncodeWorker implements Runnable {
 		workingThread.setDaemon(true);
 		// もう初期化時に起動しておく。
 		workingThread.start();
-
-		// 変換用のコーダーをつくっておく。
-		encoder = IStreamCoder.make(Direction.ENCODING, ICodec.ID.CODEC_ID_FLV1);
-		IRational frameRate = IRational.make(15, 1); // 15fps
-		encoder.setNumPicturesInGroupOfPictures(30); // gopを30にしておく。keyframeが30枚ごとになる。
-		encoder.setBitRate(250000); // 250kbps
-		encoder.setBitRateTolerance(9000);
-		encoder.setPixelType(IPixelFormat.Type.YUV420P);
-		encoder.setWidth(320);
-		encoder.setHeight(240);
-		encoder.setGlobalQuality(10);
-		encoder.setFrameRate(frameRate);
-		encoder.setTimeBase(IRational.make(1, 1000)); // 1/1000設定(flvはこうなるべき)
-		if(encoder.open(null, null) < 0) {
-			throw new RuntimeException("エンコーダーが開けませんでした。");
-		}
 	}
 	public void setOutputTarget(IOutputModule target) {
 		this.target = target;
+	}
+	public void setEncoder(IStreamCoder coder) {
+		this.encoder = coder;
 	}
 	/**
 	 * 停止する
@@ -101,7 +86,7 @@ public class EncodeWorker implements Runnable {
 					videoTagToVideoPicture((VideoTag) mediaData);
 				}
 				else if(mediaData instanceof AudioTag) {
-					
+					audioTagToAudioSamples((AudioTag) mediaData);
 				}
 				else if(mediaData instanceof VideoData) {
 					
@@ -110,7 +95,8 @@ public class EncodeWorker implements Runnable {
 					
 				}
 				else if(mediaData instanceof IVideoPicture) {
-					
+					// TODO まだ未検証
+					videoPictureToFlvTag((IVideoPicture) mediaData);
 				}
 				else if(mediaData instanceof IAudioSamples) {
 					
@@ -127,11 +113,13 @@ public class EncodeWorker implements Runnable {
 				decoder.close();
 				decoder = null;
 			}
+			if(encoder != null) {
+				encoder.close();
+				encoder = null;
+			}
 		}
 	}
 	private void videoTagToVideoPicture(VideoTag tag) throws Exception {
-		System.out.print("in");
-		System.out.println(tag);
 		IPacket packet = flvPacketizer.getPacket(tag);
 		if(packet == null) {
 			return;
@@ -141,7 +129,6 @@ public class EncodeWorker implements Runnable {
 				decoder.close();
 				decoder = null;
 			}
-			System.out.println("decoderつくります。");
 			decoder = flvPacketizer.createVideoDecoder();
 		}
 		// packetに対してデコードを実行
@@ -161,8 +148,32 @@ public class EncodeWorker implements Runnable {
 			}
 		}
 	}
-	private void audioTagToAudioSamples(AudioTag tag) {
-		
+	private void audioTagToAudioSamples(AudioTag tag) throws Exception {
+		IPacket packet = flvPacketizer.getPacket(tag);
+		if(packet == null) {
+			return;
+		}
+		if(decoder == null || !FlvPacketizer.isSameCodec(tag, decoder)) {
+			if(decoder != null) {
+				decoder.close();
+				decoder = null;
+			}
+			decoder = flvPacketizer.createAudioDecoder();
+		}
+		// packetに対してデコードを実行
+		int offset = 0;
+		IAudioSamples samples = IAudioSamples.make(1024, decoder.getChannels());
+		while(offset < packet.getSize()) {
+			int bytesDecoded = decoder.decodeAudio(samples, packet, offset);
+			if(bytesDecoded < 0) {
+				throw new Exception("デコード中にエラーが発生しました。");
+			}
+			offset += bytesDecoded;
+			if(samples.isComplete()) {
+				samples.setTimeStamp(tag.getTimestamp() * 1000);
+				audioSampleToFlvTag(samples);
+			}
+		}
 	}
 	private void audioDataToAudioSamples(AudioData data) {
 		
@@ -171,7 +182,9 @@ public class EncodeWorker implements Runnable {
 		
 	}
 	private void videoPictureToFlvTag(IVideoPicture picture) throws Exception {
-		System.out.println(picture);
+		if(encoder == null) {
+			return;
+		}
 		// サイズを確認して、サイズが違う場合はリサンプルしてやる必要あり。
 		IVideoPicture pic = picture;
 		// 入力videoPictureとターゲットvideoPictureが一致するかわからないので、合わせる必要あり。
@@ -189,7 +202,6 @@ public class EncodeWorker implements Runnable {
 			throw new Exception("変換失敗");
 		}
 		if(packet.isComplete()) {
-			System.out.println(packet);
 			for(Tag tag : flvDepacketizer.getTag(encoder, packet)) {
 				if(target != null) {
 					synchronized(target) {
@@ -199,7 +211,34 @@ public class EncodeWorker implements Runnable {
 			}
 		}
 	}
-	private void audioSampleToFlvTag(IAudioSamples samples) {
-		
+	private void audioSampleToFlvTag(IAudioSamples samples) throws Exception {
+		if(encoder == null) {
+			return;
+		}
+		IAudioSamples spl = samples;
+		if(samples.getChannels() != encoder.getChannels()
+			|| samples.getSampleRate() != encoder.getSampleRate()) {
+			IAudioResampler resampler = IAudioResampler.make(encoder.getChannels(), samples.getChannels(), encoder.getSampleRate(), samples.getSampleRate());
+			spl = IAudioSamples.make(samples.getNumSamples(), encoder.getChannels());
+			resampler.resample(spl, samples, samples.getNumSamples());
+		}
+		IPacket packet = IPacket.make();
+		int samplesConsumed = 0;
+		while(samplesConsumed < spl.getNumSamples()) {
+			int retval = encoder.encodeAudio(packet, spl, samplesConsumed);
+			if(retval < 0) {
+				throw new Exception("変換失敗");
+			}
+			samplesConsumed += retval;
+			if(packet.isComplete()) {
+				for(Tag tag : flvDepacketizer.getTag(encoder, packet)) {
+					if(target != null) {
+						synchronized(target) {
+							target.setMixedData(tag);
+						}
+					}
+				}
+			}
+		}
 	}
 }
