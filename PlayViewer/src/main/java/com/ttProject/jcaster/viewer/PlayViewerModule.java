@@ -142,7 +142,6 @@ public class PlayViewerModule implements IViewerModule, IOutputModule {
 	}
 	@Override
 	public void setMixedData(Tag tag) {
-		System.out.println(tag);
 		if(tag == null) {
 			return;
 		}
