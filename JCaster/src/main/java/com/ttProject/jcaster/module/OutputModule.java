@@ -12,6 +12,7 @@ import com.ttProject.media.flv.tag.VideoTag;
 /**
  * 出力モジュールを管理するモジュール
  * @author taktod
+ * 整列はここでやった方がわかりやすいかも・・・
  */
 public class OutputModule implements IOutputModule {
 	/** 通常のoutputModule */
