@@ -44,10 +44,16 @@ public class MixedMediaOrderModel {
 		lastTimestamp = 0;
 	}
 	public VideoTag getVideoMshTag() {
+		if(videoMshTag == null) {
+			return null;
+		}
 		videoMshTag.setTimestamp(lastTimestamp);
 		return videoMshTag;
 	}
 	public AudioTag getAudioMshTag() {
+		if(audioMshTag == null) {
+			return null;
+		}
 		audioMshTag.setTimestamp(lastTimestamp);
 		return audioMshTag;
 	}

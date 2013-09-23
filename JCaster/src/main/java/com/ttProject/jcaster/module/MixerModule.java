@@ -3,12 +3,10 @@ package com.ttProject.jcaster.module;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.ttProject.jcaster.model.MixedMediaOrderModel;
 import com.ttProject.jcaster.plugin.module.IMixerModule;
 import com.ttProject.jcaster.plugin.module.IOutputModule;
-import com.ttProject.media.flv.CodecType;
 import com.ttProject.media.flv.Tag;
-import com.ttProject.media.flv.tag.AudioTag;
-import com.ttProject.media.flv.tag.VideoTag;
 
 /**
  * mixerモジュールを管理するモジュール
@@ -26,21 +24,18 @@ import com.ttProject.media.flv.tag.VideoTag;
 public class MixerModule implements IMixerModule {
 	/** 通常のmixerModule */
 	private IMixerModule mixerModule;
+	private final MixedMediaOrderModel mixedMediaOrderModel = new MixedMediaOrderModel();
 	/** viewerでうけとりたい場合のmixerModule */
 	private Set<IMixerModule> viewerModules = new HashSet<IMixerModule>();
-	// 転送データがtagでavcやaacだったときのmshTag保持
-	private AudioTag audioMshTag = null;
-	private VideoTag videoMshTag = null;
-	private int lastTimestamp = 0;
 	public void setMixerModule(IMixerModule module) {
 		mixerModule = module;
-		if(audioMshTag != null) {
-			audioMshTag.setTimestamp(lastTimestamp);
-			mixerModule.setData(audioMshTag);
+		Tag tag = mixedMediaOrderModel.getAudioMshTag();
+		if(tag != null) {
+			mixerModule.setData(tag);
 		}
-		if(videoMshTag != null) {
-			videoMshTag.setTimestamp(lastTimestamp);
-			mixerModule.setData(videoMshTag);
+		tag = mixedMediaOrderModel.getVideoMshTag();
+		if(tag != null) {
+			mixerModule.setData(tag);
 		}
 	}
 	public void removeMixerModule(IMixerModule module) {
@@ -50,13 +45,13 @@ public class MixerModule implements IMixerModule {
 	}
 	public void setViewerModule(IMixerModule module) {
 		viewerModules.add(module);
-		if(audioMshTag != null) {
-			audioMshTag.setTimestamp(lastTimestamp);
-			module.setData(audioMshTag);
+		Tag tag = mixedMediaOrderModel.getAudioMshTag();
+		if(tag != null) {
+			module.setData(tag);
 		}
-		if(videoMshTag != null) {
-			videoMshTag.setTimestamp(lastTimestamp);
-			module.setData(videoMshTag);
+		tag = mixedMediaOrderModel.getVideoMshTag();
+		if(tag != null) {
+			module.setData(tag);
 		}
 	}
 	public void removeViewerModule(IMixerModule module) {
@@ -80,33 +75,11 @@ public class MixerModule implements IMixerModule {
 	public void setData(Object mediaData) {
 		// 中途でregisterしたらmediaSequenceHeaderを送るという処理がありえるので、ここで管理しておいて、あたらしく登録した場合には送り直す必要がでてくる。面倒だね。
 		// データのhookは本家もviewerも実行
-		if(mediaData instanceof AudioTag) {
-			AudioTag aTag = (AudioTag) mediaData;
-			if(aTag.getCodec() == CodecType.AAC && aTag.isMediaSequenceHeader()) {
-				audioMshTag = aTag;
+		mixedMediaOrderModel.addData(mediaData);
+		for(Object data : mixedMediaOrderModel.getCompleteData()) {
+			if(mixerModule != null) {
+				mixerModule.setData(data);
 			}
-			else if(aTag.getCodec() != CodecType.AAC) {
-				audioMshTag = null;
-			}
-		}
-		else if(mediaData instanceof VideoTag) {
-			VideoTag vTag = (VideoTag) mediaData;
-			if(vTag.getCodec() == CodecType.AVC && vTag.isMediaSequenceHeader()) {
-				videoMshTag = vTag;
-			}
-			else if(vTag.getCodec() != CodecType.AVC) {
-				videoMshTag = null;
-			}
-		}
-		else if(mediaData instanceof Tag) {
-			lastTimestamp = ((Tag)mediaData).getTimestamp();
-		}
-		else {
-			videoMshTag = null;
-			audioMshTag = null;
-		}
-		if(mixerModule != null) {
-			mixerModule.setData(mediaData);
 		}
 	}
 }
