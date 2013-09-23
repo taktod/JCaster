@@ -145,7 +145,7 @@ public class MixedMediaOrderModel {
 	 * @param obj
 	 * @return
 	 */
-	public long getTimestamp(Object obj) {
+	public static long getTimestamp(Object obj) {
 		if(obj instanceof Tag) {
 			return ((Tag)obj).getTimestamp();
 		}

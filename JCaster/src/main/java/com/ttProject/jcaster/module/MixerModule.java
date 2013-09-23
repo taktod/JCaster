@@ -27,6 +27,7 @@ public class MixerModule implements IMixerModule {
 	private final MixedMediaOrderModel mixedMediaOrderModel = new MixedMediaOrderModel();
 	/** viewerでうけとりたい場合のmixerModule */
 	private Set<IMixerModule> viewerModules = new HashSet<IMixerModule>();
+	private boolean zeroReset = true;
 	public void setMixerModule(IMixerModule module) {
 		mixerModule = module;
 		Tag tag = mixedMediaOrderModel.getAudioMshTag();
@@ -73,12 +74,22 @@ public class MixerModule implements IMixerModule {
 	}
 	@Override
 	public void setData(Object mediaData) {
+		if(MixedMediaOrderModel.getTimestamp(mediaData) == 0) {
+			if(zeroReset) { // timestamp = 0がきたらリセットする。
+				mixedMediaOrderModel.reset();
+			}
+			zeroReset = false;
+		}
+		else {
+			zeroReset = true;
+		}
 		// 中途でregisterしたらmediaSequenceHeaderを送るという処理がありえるので、ここで管理しておいて、あたらしく登録した場合には送り直す必要がでてくる。面倒だね。
 		// データのhookは本家もviewerも実行
 		mixedMediaOrderModel.addData(mediaData);
 		for(Object data : mixedMediaOrderModel.getCompleteData()) {
 			if(mixerModule != null) {
 				mixerModule.setData(data);
+				// viewerModuleへの転送も追加する必要あり。(とりあえずあとでやる。)
 			}
 		}
 	}

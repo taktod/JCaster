@@ -36,7 +36,7 @@ public class EncodeWorker implements Runnable {
 	private FlvDepacketizer flvDepacketizer = new FlvDepacketizer();
 	private IStreamCoder encoder = null;
 	private IOutputModule target = null;
-	
+
 	public static FlvTagOrderManager orderManager = null;
 	/**
 	 * コンストラクタ
@@ -247,6 +247,8 @@ public class EncodeWorker implements Runnable {
 			if(packet.isComplete()) {
 				for(Tag tag : flvDepacketizer.getTag(encoder, packet)) {
 					if(target != null) {
+						// TODO この出力はソートする必要はなし。
+						// ただし始めから考えてtimestamp = 0から始める必要あり。
 						synchronized (orderManager) {
 //							orderManager.addTag(tag);
 //							for(Tag t : orderManager.getCompleteTags()) {
