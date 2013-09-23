@@ -106,6 +106,7 @@ public class Mp4Feeder {
 		analyzer.close();
 	}
 	public void start(int startPos) throws Exception {
+		this.startTimestamp = -1;
 		// 現在の再生位置を調査して、動作させておく。
 		// metaデータがわからない場合はエラーを返しておく。
 		tmp = FileReadChannel.openFileReadChannel(tmpFile.toString());
@@ -113,7 +114,6 @@ public class Mp4Feeder {
 		orderModel = new FlvOrderModel(tmp, true, true, startTimestamp);
 		if(startTimestamp == 0) {
 			startTime = -1;
-			this.startTimestamp = -1;
 		}
 		else {
 			startTime =  - startTimestamp;

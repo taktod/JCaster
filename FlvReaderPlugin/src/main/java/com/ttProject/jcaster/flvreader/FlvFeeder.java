@@ -29,6 +29,7 @@ public class FlvFeeder {
 	private long passedTimestamp = 0;
 	private LinkedList<Tag> tagList;
 	private long startTime = -1;
+	private int startTimestamp = -1;
 	/** 変換モジュール */
 	private IMixerModule targetModule;
 	private FlvTagAnalyzer analyzer = null;
@@ -107,6 +108,7 @@ public class FlvFeeder {
 					if(tag instanceof VideoTag) {
 						VideoTag vTag = (VideoTag) tag;
 						if(vTag.isKeyFrame()) {
+							this.startTimestamp = tag.getTimestamp();
 							tagList.addLast(tag);
 							break;
 						}
@@ -114,6 +116,7 @@ public class FlvFeeder {
 				}
 				else {
 					// 映像がない場合
+					this.startTimestamp = tag.getTimestamp();
 					tagList.addLast(tag);
 					break;
 				}
@@ -154,6 +157,14 @@ public class FlvFeeder {
 				// データがtagListにある場合はこのデータを送信しておく。
 				passedTimestamp = listedTag.getTimestamp();
 				if(targetModule != null) {
+					int ts = listedTag.getTimestamp() - startTimestamp;
+					if(ts < 0) {
+						listedTag.setTimestamp(0);
+					}
+					else {
+						listedTag.setTimestamp(listedTag.getTimestamp() - startTimestamp);
+					}
+					System.out.println(listedTag);
 					targetModule.setData(Media.FlvTag, listedTag);
 				}
 			}
