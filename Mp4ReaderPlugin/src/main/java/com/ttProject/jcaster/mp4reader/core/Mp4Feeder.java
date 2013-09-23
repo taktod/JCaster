@@ -23,16 +23,28 @@ import com.ttProject.util.TmpFile;
  * @author taktod
  */
 public class Mp4Feeder {
+	/** ロガー */
 	private final Logger logger = Logger.getLogger(Mp4Feeder.class);
+	/** 処理対象ファイル */
 	private String target;
+	/** 処理対象 */
 	private IFileReadChannel source = null;
+	/** 解析一時データ */
 	private IFileReadChannel tmp = null;
-	private FlvOrderModel orderModel = null;
+	/** 解析一時データ */
 	private TmpFile tmpFile;
+	/** FlvTag取り出しモデル */
+	private FlvOrderModel orderModel = null;
+	/** 全体の長さ */
 	private long totalDuration = 0;
+	/** 処理済みtimestamp */
 	private long passedTimestamp = 0;
+	/** 処理待ちデータ(時間軸を合わせるために、待ちになっているデータ保持) */
 	private LinkedList<Tag> tagList;
+	/** 処理開始時間 */
 	private long startTime = -1;
+	/** 開始タグtimestamp */
+	private int startTimestamp = -1;
 	/** 変換モジュール */
 	private IMixerModule targetModule;
 	/**
@@ -101,6 +113,7 @@ public class Mp4Feeder {
 		orderModel = new FlvOrderModel(tmp, true, true, startTimestamp);
 		if(startTimestamp == 0) {
 			startTime = -1;
+			this.startTimestamp = -1;
 		}
 		else {
 			startTime =  - startTimestamp;
@@ -155,6 +168,10 @@ public class Mp4Feeder {
 				// tagをみつけた場合はbaseにおくっておく。
 				passedTimestamp = tag.getTimestamp();
 				if(targetModule != null) {
+					if(startTimestamp == -1) {
+						startTimestamp = tag.getTimestamp();
+					}
+					tag.setTimestamp(tag.getTimestamp() - startTimestamp);
 					targetModule.setData(Media.FlvTag, tag);
 				}
 			}
