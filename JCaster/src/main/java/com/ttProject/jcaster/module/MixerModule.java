@@ -24,9 +24,10 @@ import com.ttProject.media.flv.Tag;
 public class MixerModule implements IMixerModule {
 	/** 通常のmixerModule */
 	private IMixerModule mixerModule;
-	private final MixedMediaOrderModel mixedMediaOrderModel = new MixedMediaOrderModel();
 	/** viewerでうけとりたい場合のmixerModule */
 	private Set<IMixerModule> viewerModules = new HashSet<IMixerModule>();
+
+	private final MixedMediaOrderModel mixedMediaOrderModel = new MixedMediaOrderModel();
 	private boolean zeroReset = true;
 	public void setMixerModule(IMixerModule module) {
 		mixerModule = module;

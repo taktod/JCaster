@@ -3,11 +3,9 @@ package com.ttProject.jcaster.module;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.ttProject.jcaster.model.MixedMediaOrderModel;
 import com.ttProject.jcaster.plugin.module.IOutputModule;
-import com.ttProject.media.flv.CodecType;
 import com.ttProject.media.flv.Tag;
-import com.ttProject.media.flv.tag.AudioTag;
-import com.ttProject.media.flv.tag.VideoTag;
 
 /**
  * 出力モジュールを管理するモジュール
@@ -19,18 +17,18 @@ public class OutputModule implements IOutputModule {
 	private IOutputModule outputModule;
 	/** viewerでうけとりたい場合のoutputModule */
 	private Set<IOutputModule> viewerModules = new HashSet<IOutputModule>();
-	private AudioTag audioMshTag = null;
-	private VideoTag videoMshTag = null;
-	private int lastTimestamp = 0;
+	
+	private final MixedMediaOrderModel mixedMediaOrderModel = new MixedMediaOrderModel();
+	private boolean zeroReset = true;
 	public void setOutputModule(IOutputModule module) {
 		outputModule = module;
-		if(audioMshTag != null) {
-			audioMshTag.setTimestamp(lastTimestamp);
-			outputModule.setMixedData(audioMshTag);
+		Tag tag = mixedMediaOrderModel.getAudioMshTag();
+		if(tag != null) {
+			outputModule.setMixedData(tag);
 		}
-		if(videoMshTag != null) {
-			videoMshTag.setTimestamp(lastTimestamp);
-			outputModule.setMixedData(videoMshTag);
+		tag = mixedMediaOrderModel.getVideoMshTag();
+		if(tag != null) {
+			outputModule.setMixedData(tag);
 		}
 	}
 	public void removeOutputModule(IOutputModule module) {
@@ -40,13 +38,13 @@ public class OutputModule implements IOutputModule {
 	}
 	public void setViewerModule(IOutputModule module) {
 		viewerModules.add(module);
-		if(audioMshTag != null) {
-			audioMshTag.setTimestamp(lastTimestamp);
-			module.setMixedData(audioMshTag);
+		Tag tag = mixedMediaOrderModel.getAudioMshTag();
+		if(tag != null) {
+			module.setMixedData(tag);
 		}
-		if(videoMshTag != null) {
-			videoMshTag.setTimestamp(lastTimestamp);
-			module.setMixedData(videoMshTag);
+		tag = mixedMediaOrderModel.getVideoMshTag();
+		if(tag != null) {
+			module.setMixedData(tag);
 		}
 	}
 	public void removeViewerModule(IOutputModule module) {
@@ -61,31 +59,26 @@ public class OutputModule implements IOutputModule {
 	}
 	@Override
 	public void setMixedData(Tag tag) {
-		// データのhookも本家もviewerも実行
-		if(tag instanceof AudioTag) {
-			AudioTag aTag = (AudioTag) tag;
-			if(aTag.getCodec() == CodecType.AAC && aTag.isMediaSequenceHeader()) {
-				audioMshTag = aTag;
+		if(tag.getTimestamp() == 0) {
+			if(zeroReset) {
+				mixedMediaOrderModel.reset();
 			}
-			else if(aTag.getCodec() != CodecType.AAC) {
-				audioMshTag = null;
-			}
+			zeroReset = false;
 		}
-		if(tag instanceof VideoTag) {
-			VideoTag vTag = (VideoTag) tag;
-			if(vTag.getCodec() == CodecType.AVC && vTag.isMediaSequenceHeader()) {
-				videoMshTag = vTag;
-			}
-			else if(vTag.getCodec() != CodecType.AVC) {
-				videoMshTag = null;
-			}
+		else {
+			zeroReset = true;
 		}
-		lastTimestamp = tag.getTimestamp();
-		if(outputModule != null) {
-			outputModule.setMixedData(tag);
-		}
-		for(IOutputModule module : viewerModules) {
-			module.setMixedData(tag);
+		mixedMediaOrderModel.addData(tag);
+		for(Object data : mixedMediaOrderModel.getCompleteData()) {
+			if(data instanceof Tag) {
+				tag = (Tag) data;
+				if(outputModule != null) {
+					outputModule.setMixedData(tag);
+				}
+				for(IOutputModule module : viewerModules) {
+					module.setMixedData(tag);
+				}
+			}
 		}
 	}
 }
