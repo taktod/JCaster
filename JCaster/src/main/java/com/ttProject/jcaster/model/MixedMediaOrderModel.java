@@ -22,7 +22,7 @@ import com.xuggle.xuggler.IVideoPicture;
 public class MixedMediaOrderModel {
 	/** ロガー */
 //	private final Logger logger = Logger.getLogger(MixedMediaOrderModel.class);
-	private List<Object> audioList = new ArrayList<Object>();
+	public List<Object> audioList = new ArrayList<Object>();
 	private List<Object> videoList = new ArrayList<Object>();
 	private final DataComparator dataSort = new DataComparator();
 	// このindex以内のデータは終端がこない限り保持しておく。

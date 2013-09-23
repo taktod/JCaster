@@ -9,11 +9,11 @@ import javax.swing.JTextField;
 import org.apache.log4j.Logger;
 
 import com.ttProject.jcaster.mixer.encode.EncodeWorker;
+import com.ttProject.jcaster.mixer.util.MediaUtil;
 import com.ttProject.jcaster.plugin.base.BaseHandler;
 import com.ttProject.jcaster.plugin.base.ISwingMainBase;
 import com.ttProject.jcaster.plugin.module.IMixerModule;
 import com.ttProject.jcaster.plugin.module.IOutputModule;
-import com.ttProject.media.flv.FlvTagOrderManager;
 import com.ttProject.media.flv.tag.AudioTag;
 import com.ttProject.media.flv.tag.VideoTag;
 import com.ttProject.media.raw.AudioData;
@@ -35,6 +35,8 @@ public class EncodeMixerModule implements IMixerModule {
 	private IOutputModule targetModule;
 	private EncodeWorker videoWorker = null;
 	private EncodeWorker audioWorker = null;
+	
+	private boolean zeroReset = true;
 	public void remove() {
 		if(videoWorker != null) {
 			videoWorker.close();
@@ -42,15 +44,12 @@ public class EncodeMixerModule implements IMixerModule {
 		if(audioWorker != null) {
 			audioWorker.close();
 		}
-		EncodeWorker.orderManager = null;
 	}
 	/**
 	 * セットアップ
 	 */
 	public void setup() {
-		EncodeWorker.orderManager = new FlvTagOrderManager();
-		EncodeWorker.orderManager.setNomoreAudio();
-		EncodeWorker.orderManager.setNomoreVideo();
+		EncodeWorker.startTimestamp = -1;
 		videoWorker = new EncodeWorker();
 		videoWorker.setOutputTarget(targetModule);
 		
@@ -130,8 +129,52 @@ public class EncodeMixerModule implements IMixerModule {
 	 * データを入力モジュールから受け取ったときの動作
 	 */
 	@Override
-	public void setData(Object mediaData) {
+	public synchronized void setData(Object mediaData) {
 		// TODO ここでデータを監視して、リセットされたときに元に戻す必要がありそうだ。timestampが大きくずれているときの処理
+		if(MediaUtil.getTimestamp(mediaData) == 0) {
+			if(zeroReset) {
+				// リセットがはいったので、なんとかしておかないとだめ。
+				videoWorker.close();
+				audioWorker.close();
+				//
+				EncodeWorker.startTimestamp = -1;
+				// TODO とりあえずworkerはリセットすべき。
+				videoWorker = new EncodeWorker();
+				videoWorker.setOutputTarget(targetModule);
+				
+				IStreamCoder encoder = IStreamCoder.make(Direction.ENCODING, ICodec.ID.CODEC_ID_FLV1);
+				IRational frameRate = IRational.make(15, 1); // 15fps
+				encoder.setNumPicturesInGroupOfPictures(30); // gopを30にしておく。keyframeが30枚ごとになる。
+				encoder.setBitRate(650000); // 650kbps
+				encoder.setBitRateTolerance(9000);
+				encoder.setPixelType(IPixelFormat.Type.YUV420P);
+				encoder.setWidth(320);
+				encoder.setHeight(240);
+				encoder.setGlobalQuality(10);
+				encoder.setFrameRate(frameRate);
+				encoder.setTimeBase(IRational.make(1, 1000)); // 1/1000設定(flvはこうなるべき)
+				if(encoder.open(null, null) < 0) {
+					throw new RuntimeException("エンコーダーが開けませんでした。");
+				}
+				videoWorker.setEncoder(encoder);
+				
+				audioWorker = new EncodeWorker();
+				audioWorker.setOutputTarget(targetModule);
+				
+				encoder = IStreamCoder.make(Direction.ENCODING, ICodec.ID.CODEC_ID_AAC);
+				encoder.setSampleRate(44100);
+				encoder.setChannels(2);
+				encoder.setBitRate(96000);
+				if(encoder.open(null, null) < 0) {
+					throw new RuntimeException("変換コーダーが開けませんでした。");
+				}
+				audioWorker.setEncoder(encoder);
+			}
+			zeroReset = false;
+		}
+		else {
+			zeroReset = true;
+		}
 		// モジュールの受け渡し(変換が必要な場合)は各threadにやらせる。(大本のthreadには悪影響を与えたくないため。)
 		if(mediaData instanceof VideoTag) {
 			if(videoWorker != null) {

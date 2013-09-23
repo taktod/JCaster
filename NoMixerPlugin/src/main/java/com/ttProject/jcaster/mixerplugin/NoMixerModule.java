@@ -22,10 +22,13 @@ public class NoMixerModule implements IMixerModule {
 
 	/** 受け渡しを実行する出力モジュール */
 	private IOutputModule targetModule;
+	
+	private int startTimestamp = -1;
 	/**
 	 * セットアップ
 	 */
 	public void setup() {
+		startTimestamp = -1;
 		logger.info("スルーするmixer動作の初期化");
 		ISwingMainBase mainbase = BaseHandler.getISwingMainBase();
 		if(mainbase == null) {
@@ -69,8 +72,13 @@ public class NoMixerModule implements IMixerModule {
 	public void setData(Object mediaData) {
 		if(mediaData instanceof Tag) {
 			// videoMshかaudioMshである場合はデータを保持する必要あり。
+			Tag tag = (Tag) mediaData;
+			if(startTimestamp == -1) {
+				startTimestamp = tag.getTimestamp();
+			}
+			tag.setTimestamp(tag.getTimestamp() - startTimestamp);
 			if(targetModule != null) {
-				targetModule.setMixedData((Tag) mediaData);
+				targetModule.setMixedData(tag);
 			}
 		}
 		else {

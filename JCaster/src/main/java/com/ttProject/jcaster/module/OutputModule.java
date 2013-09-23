@@ -60,6 +60,7 @@ public class OutputModule implements IOutputModule {
 	@Override
 	public void setMixedData(Tag tag) {
 		if(tag.getTimestamp() == 0) {
+			// 映像のリセットがあってから、音声のリセットが遅れてやってくる・・・みたいなことが発生するらしい。
 			if(zeroReset) {
 				mixedMediaOrderModel.reset();
 			}

@@ -3,7 +3,6 @@ package com.ttProject.jcaster.mixer.encode;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import com.ttProject.jcaster.plugin.module.IOutputModule;
-import com.ttProject.media.flv.FlvTagOrderManager;
 import com.ttProject.media.flv.Tag;
 import com.ttProject.media.flv.tag.AudioTag;
 import com.ttProject.media.flv.tag.VideoTag;
@@ -37,7 +36,7 @@ public class EncodeWorker implements Runnable {
 	private IStreamCoder encoder = null;
 	private IOutputModule target = null;
 
-	public static FlvTagOrderManager orderManager = null;
+	public static int startTimestamp = -1;
 	/**
 	 * コンストラクタ
 	 */
@@ -52,6 +51,11 @@ public class EncodeWorker implements Runnable {
 		this.target = target;
 	}
 	public void setEncoder(IStreamCoder coder) {
+		// 前のエンコーダーがのこっている場合は止めておく。
+		if(this.encoder != null) {
+			this.encoder.close();
+			this.encoder = null;
+		}
 		this.encoder = coder;
 	}
 	/**
@@ -85,30 +89,24 @@ public class EncodeWorker implements Runnable {
 			while(workingFlg) {
 				Object mediaData = mediaDataQueue.take();
 				if(mediaData instanceof VideoTag) {
-					orderManager.setVideoEndFlg(false);
 					// videoTagなのでVideoPictureに変換したいところ
 					videoTagToVideoPicture((VideoTag) mediaData);
 				}
 				else if(mediaData instanceof AudioTag) {
-					orderManager.setAudioEndFlg(false);
 					audioTagToAudioSamples((AudioTag) mediaData);
 				}
 				else if(mediaData instanceof VideoData) {
-					orderManager.setVideoEndFlg(false);
 					// 今度はここやりたい。
 					videoDataToVideoPicture((VideoData) mediaData);
 				}
 				else if(mediaData instanceof AudioData) {
-					orderManager.setAudioEndFlg(false);
 					audioDataToAudioSamples((AudioData) mediaData);
 				}
 				else if(mediaData instanceof IVideoPicture) {
-					orderManager.setVideoEndFlg(false);
 					// TODO まだ未検証
 					videoPictureToFlvTag((IVideoPicture) mediaData);
 				}
 				else if(mediaData instanceof IAudioSamples) {
-					orderManager.setAudioEndFlg(false);
 					// TODO まだ未検証
 					audioSampleToFlvTag((IAudioSamples) mediaData);
 				}
@@ -215,11 +213,15 @@ public class EncodeWorker implements Runnable {
 		if(packet.isComplete()) {
 			for(Tag tag : flvDepacketizer.getTag(encoder, packet)) {
 				if(target != null) {
-					synchronized(orderManager) {
-//						orderManager.addTag(tag);
-//						for(Tag t : orderManager.getCompleteTags()) {
-							target.setMixedData(tag);
-//						}
+					synchronized(target) {
+						if(startTimestamp == -1) {
+							startTimestamp = tag.getTimestamp() - 1;
+							tag.setTimestamp(0);
+						}
+						else {
+							tag.setTimestamp(tag.getTimestamp() - startTimestamp);
+						}
+						target.setMixedData(tag);
 					}
 				}
 			}
@@ -249,11 +251,15 @@ public class EncodeWorker implements Runnable {
 					if(target != null) {
 						// TODO この出力はソートする必要はなし。
 						// ただし始めから考えてtimestamp = 0から始める必要あり。
-						synchronized (orderManager) {
-//							orderManager.addTag(tag);
-//							for(Tag t : orderManager.getCompleteTags()) {
-								target.setMixedData(tag);
-//							}
+						synchronized(target) {
+							if(startTimestamp == -1) {
+								startTimestamp = tag.getTimestamp() - 1;
+								tag.setTimestamp(0);
+							}
+							else {
+								tag.setTimestamp(tag.getTimestamp() - startTimestamp);
+							}
+							target.setMixedData(tag);
 						}
 					}
 				}

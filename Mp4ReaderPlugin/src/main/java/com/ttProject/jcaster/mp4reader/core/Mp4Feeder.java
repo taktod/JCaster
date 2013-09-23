@@ -168,9 +168,12 @@ public class Mp4Feeder {
 				passedTimestamp = tag.getTimestamp();
 				if(targetModule != null) {
 					if(startTimestamp == -1) {
-						startTimestamp = tag.getTimestamp();
+						startTimestamp = tag.getTimestamp() - 1;
+						tag.setTimestamp(0);
 					}
-					tag.setTimestamp(tag.getTimestamp() - startTimestamp);
+					else {
+						tag.setTimestamp(tag.getTimestamp() - startTimestamp);
+					}
 					targetModule.setData(tag);
 				}
 			}
