@@ -63,7 +63,7 @@ public class PlayViewerModule implements IViewerModule, IOutputModule {
 		volumeSlider.addChangeListener(new ChangeListener() {
 			@Override
 			public void stateChanged(ChangeEvent e) {
-				System.out.println("sliderChanged:" + volumeSlider.getValue());
+//				System.out.println("sliderChanged:" + volumeSlider.getValue());
 				// ここで変更を読み取る必要あるっぽい。
 				if(decoder != null) {
 					decoder.setVolume(volumeSlider.getValue());

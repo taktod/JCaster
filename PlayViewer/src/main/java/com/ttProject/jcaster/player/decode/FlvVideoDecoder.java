@@ -164,7 +164,20 @@ public class FlvVideoDecoder implements Runnable {
 		VideoData videoData = null;
 		while(videoDataQueue.size() != 0) {
 			VideoData vData = videoDataQueue.getFirst();
+			// 現在のtimestampとvDataのずれをまず知る必要がある。
 			if(timestamp != -1 && vData.getTimestamp() > timestamp) {
+				if(dataQueue.size() == 0) {
+					if(videoData != null) {
+						component.setImage(videoData.getImage());
+					}
+					// データqueueが存在していない場合は、次のtimestampまで待ってデータを吐いてもいいと思う。
+					try {
+						Thread.sleep(vData.getTimestamp() - audioDecoder.getTimestamp());
+						videoData = videoDataQueue.removeFirst();
+					}
+					catch (Exception e) {
+					}
+				}
 				break;
 			}
 			videoData = videoDataQueue.removeFirst();
