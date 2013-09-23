@@ -2,7 +2,6 @@ package com.ttProject.jcaster.mixer.encode;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
-import com.ttProject.jcaster.plugin.base.IMainBase.Media;
 import com.ttProject.jcaster.plugin.module.IOutputModule;
 import com.ttProject.media.flv.FlvTagOrderManager;
 import com.ttProject.media.flv.Tag;
@@ -72,7 +71,7 @@ public class EncodeWorker implements Runnable {
 	 * @param media
 	 * @param mediaData
 	 */
-	public void setData(Media media, Object mediaData) {
+	public void setData(Object mediaData) {
 		if(workingFlg) {
 			mediaDataQueue.add(mediaData);
 		}

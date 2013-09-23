@@ -28,12 +28,12 @@ public interface IMainBase {
 	/**
 	 * メディアタイプの定義
 	 * @author taktod
-	 */
+	 * /
 	public enum Media {
 		AudioData, // myLib.media.rawのAudioData
 		VideoData, // myLib.media.rawのVideoData
 		FlvTag, // flvTag
 		VideoPicture, // xuggleのpicture
 		AudioSamples // xuggleのsamples
-	}
+	}//*/
 }

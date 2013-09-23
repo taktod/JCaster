@@ -4,7 +4,6 @@ import java.util.LinkedList;
 
 import org.apache.log4j.Logger;
 
-import com.ttProject.jcaster.plugin.base.IMainBase.Media;
 import com.ttProject.jcaster.plugin.module.IMixerModule;
 import com.ttProject.media.flv.CodecType;
 import com.ttProject.media.flv.FlvHeader;
@@ -164,8 +163,7 @@ public class FlvFeeder {
 					else {
 						listedTag.setTimestamp(listedTag.getTimestamp() - startTimestamp);
 					}
-					System.out.println(listedTag);
-					targetModule.setData(Media.FlvTag, listedTag);
+					targetModule.setData(listedTag);
 				}
 			}
 			if(tag == null) {

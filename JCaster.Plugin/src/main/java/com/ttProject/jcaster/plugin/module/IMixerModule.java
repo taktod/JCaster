@@ -1,7 +1,5 @@
 package com.ttProject.jcaster.plugin.module;
 
-import com.ttProject.jcaster.plugin.base.IMainBase.Media;
-
 /**
  * コーデックの変更を実行したりするモジュール
  * 欲しい動作
@@ -19,8 +17,7 @@ public interface IMixerModule extends IModule {
 	public void registerOutputModule(IOutputModule outputModule);
 	/**
 	 * メディアデータの受け入れ
-	 * @param media
 	 * @param mediaData
 	 */
-	public void setData(Media media, Object mediaData);
+	public void setData(Object mediaData);
 }

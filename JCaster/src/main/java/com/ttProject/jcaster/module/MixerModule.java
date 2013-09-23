@@ -3,7 +3,6 @@ package com.ttProject.jcaster.module;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.ttProject.jcaster.plugin.base.IMainBase.Media;
 import com.ttProject.jcaster.plugin.module.IMixerModule;
 import com.ttProject.jcaster.plugin.module.IOutputModule;
 import com.ttProject.media.flv.CodecType;
@@ -14,6 +13,15 @@ import com.ttProject.media.flv.tag.VideoTag;
 /**
  * mixerモジュールを管理するモジュール
  * @author taktod
+ * TODO 入力モジュールからのデータを受け取る前にデータのソートとmsh対策はやっておきたい。
+ * msh対策とは・・・
+ * aacとavcの場合はmshという解析に必要なタグがはじめだけ流れてくるという仕様がある。
+ * そのデータをトラップしておいて、次にきたモジュールにきちんと流してやること。
+ * 
+ * flip対策
+ * 映像と音声のデータがflipした場合きちんとしたオーダーに戻して動作させてやる必要がある。
+ * 
+ * この２点はここでもOutputModuleでも実行する必要があるので、適当なモジュールをつくって対策しておきたいところ。
  */
 public class MixerModule implements IMixerModule {
 	/** 通常のmixerModule */
@@ -28,11 +36,11 @@ public class MixerModule implements IMixerModule {
 		mixerModule = module;
 		if(audioMshTag != null) {
 			audioMshTag.setTimestamp(lastTimestamp);
-			mixerModule.setData(Media.FlvTag, audioMshTag);
+			mixerModule.setData(audioMshTag);
 		}
 		if(videoMshTag != null) {
 			videoMshTag.setTimestamp(lastTimestamp);
-			mixerModule.setData(Media.FlvTag, videoMshTag);
+			mixerModule.setData(videoMshTag);
 		}
 	}
 	public void removeMixerModule(IMixerModule module) {
@@ -44,11 +52,11 @@ public class MixerModule implements IMixerModule {
 		viewerModules.add(module);
 		if(audioMshTag != null) {
 			audioMshTag.setTimestamp(lastTimestamp);
-			module.setData(Media.FlvTag, audioMshTag);
+			module.setData(audioMshTag);
 		}
 		if(videoMshTag != null) {
 			videoMshTag.setTimestamp(lastTimestamp);
-			module.setData(Media.FlvTag, videoMshTag);
+			module.setData(videoMshTag);
 		}
 	}
 	public void removeViewerModule(IMixerModule module) {
@@ -69,38 +77,36 @@ public class MixerModule implements IMixerModule {
 		}
 	}
 	@Override
-	public void setData(Media media, Object mediaData) {
+	public void setData(Object mediaData) {
 		// 中途でregisterしたらmediaSequenceHeaderを送るという処理がありえるので、ここで管理しておいて、あたらしく登録した場合には送り直す必要がでてくる。面倒だね。
 		// データのhookは本家もviewerも実行
-		if(media == Media.FlvTag) {
-			if(mediaData instanceof AudioTag) {
-				AudioTag aTag = (AudioTag) mediaData;
-				if(aTag.getCodec() == CodecType.AAC && aTag.isMediaSequenceHeader()) {
-					audioMshTag = aTag;
-				}
-				else if(aTag.getCodec() != CodecType.AAC) {
-					audioMshTag = null;
-				}
+		if(mediaData instanceof AudioTag) {
+			AudioTag aTag = (AudioTag) mediaData;
+			if(aTag.getCodec() == CodecType.AAC && aTag.isMediaSequenceHeader()) {
+				audioMshTag = aTag;
 			}
-			if(mediaData instanceof VideoTag) {
-				VideoTag vTag = (VideoTag) mediaData;
-				if(vTag.getCodec() == CodecType.AVC && vTag.isMediaSequenceHeader()) {
-					videoMshTag = vTag;
-				}
-				else if(vTag.getCodec() != CodecType.AVC) {
-					videoMshTag = null;
-				}
+			else if(aTag.getCodec() != CodecType.AAC) {
+				audioMshTag = null;
 			}
-			if(mediaData instanceof Tag) {
-				lastTimestamp = ((Tag)mediaData).getTimestamp();
+		}
+		else if(mediaData instanceof VideoTag) {
+			VideoTag vTag = (VideoTag) mediaData;
+			if(vTag.getCodec() == CodecType.AVC && vTag.isMediaSequenceHeader()) {
+				videoMshTag = vTag;
 			}
+			else if(vTag.getCodec() != CodecType.AVC) {
+				videoMshTag = null;
+			}
+		}
+		else if(mediaData instanceof Tag) {
+			lastTimestamp = ((Tag)mediaData).getTimestamp();
 		}
 		else {
 			videoMshTag = null;
 			audioMshTag = null;
 		}
 		if(mixerModule != null) {
-			mixerModule.setData(media, mediaData);
+			mixerModule.setData(mediaData);
 		}
 	}
 }

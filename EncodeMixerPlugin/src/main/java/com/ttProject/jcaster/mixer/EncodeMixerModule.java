@@ -9,7 +9,6 @@ import javax.swing.JTextField;
 import org.apache.log4j.Logger;
 
 import com.ttProject.jcaster.mixer.encode.EncodeWorker;
-import com.ttProject.jcaster.plugin.base.IMainBase.Media;
 import com.ttProject.jcaster.plugin.base.BaseHandler;
 import com.ttProject.jcaster.plugin.base.ISwingMainBase;
 import com.ttProject.jcaster.plugin.module.IMixerModule;
@@ -131,37 +130,37 @@ public class EncodeMixerModule implements IMixerModule {
 	 * データを入力モジュールから受け取ったときの動作
 	 */
 	@Override
-	public void setData(Media media, Object mediaData) {
+	public void setData(Object mediaData) {
 		// TODO ここでデータを監視して、リセットされたときに元に戻す必要がありそうだ。timestampが大きくずれているときの処理
 		// モジュールの受け渡し(変換が必要な場合)は各threadにやらせる。(大本のthreadには悪影響を与えたくないため。)
 		if(mediaData instanceof VideoTag) {
 			if(videoWorker != null) {
-				videoWorker.setData(media, mediaData);
+				videoWorker.setData(mediaData);
 			}
 		}
 		else if(mediaData instanceof AudioTag) {
 			if(audioWorker != null) {
-				audioWorker.setData(media, mediaData);
+				audioWorker.setData(mediaData);
 			}
 		}
 		else if(mediaData instanceof VideoData) {
 			if(videoWorker != null) {
-				videoWorker.setData(media, mediaData);
+				videoWorker.setData(mediaData);
 			}
 		}
 		else if(mediaData instanceof AudioData) {
 			if(audioWorker != null) {
-				audioWorker.setData(media, mediaData);
+				audioWorker.setData(mediaData);
 			}
 		}
 		else if(mediaData instanceof IVideoPicture) {
 			if(videoWorker != null) {
-				videoWorker.setData(media, mediaData);
+				videoWorker.setData(mediaData);
 			}
 		}
 		else if(mediaData instanceof IAudioSamples) {
 			if(audioWorker != null) {
-				audioWorker.setData(media, mediaData);
+				audioWorker.setData(mediaData);
 			}
 		}
 		// ただしthreadをつくりまくって影響をあたえるのもいや。

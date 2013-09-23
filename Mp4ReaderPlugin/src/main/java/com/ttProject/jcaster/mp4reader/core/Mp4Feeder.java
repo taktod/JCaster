@@ -6,7 +6,6 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import com.ttProject.jcaster.plugin.base.IMainBase.Media;
 import com.ttProject.jcaster.plugin.module.IMixerModule;
 import com.ttProject.media.extra.flv.FlvOrderModel;
 import com.ttProject.media.extra.mp4.IndexFileCreator;
@@ -172,7 +171,7 @@ public class Mp4Feeder {
 						startTimestamp = tag.getTimestamp();
 					}
 					tag.setTimestamp(tag.getTimestamp() - startTimestamp);
-					targetModule.setData(Media.FlvTag, tag);
+					targetModule.setData(tag);
 				}
 			}
 			if(tagList.size() == 0 && lastTag == null) {

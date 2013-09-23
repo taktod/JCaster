@@ -7,7 +7,6 @@ import org.apache.log4j.Logger;
 
 import com.ttProject.jcaster.plugin.base.BaseHandler;
 import com.ttProject.jcaster.plugin.base.ISwingMainBase;
-import com.ttProject.jcaster.plugin.base.IMainBase.Media;
 import com.ttProject.jcaster.plugin.module.IMixerModule;
 import com.ttProject.jcaster.plugin.module.IOutputModule;
 import com.ttProject.media.flv.Tag;
@@ -67,8 +66,8 @@ public class NoMixerModule implements IMixerModule {
 	 * メディアデータの受け入れ口
 	 */
 	@Override
-	public void setData(Media media, Object mediaData) {
-		if(media == Media.FlvTag && mediaData instanceof Tag) {
+	public void setData(Object mediaData) {
+		if(mediaData instanceof Tag) {
 			// videoMshかaudioMshである場合はデータを保持する必要あり。
 			if(targetModule != null) {
 				targetModule.setMixedData((Tag) mediaData);
