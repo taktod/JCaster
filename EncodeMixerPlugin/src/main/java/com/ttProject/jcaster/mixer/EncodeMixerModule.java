@@ -4,7 +4,6 @@ import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
 
 import org.apache.log4j.Logger;
 
@@ -102,9 +101,9 @@ public class EncodeMixerModule implements IMixerModule {
 		Object[][] components = {
 				{new JLabel("Mixer"), mainbase.getComboBox(getClass())},
 				{new JLabel("Video"), new JComboBox(new String[]{"Avc(H264)", "H263"})},
-				{new JLabel("Size"), new JComponent[]{new JTextField(4), new JLabel("x"), new JTextField(4)}},
-				{new JLabel("Bitrate"), new JTextField(10)},
-				{new JLabel("Fps"), new JTextField(10)},
+				{new JLabel("Size"), new JComboBox(new String[]{"1024x768", "1024x576", "800x600", "800x450", "640x480", "640x360", "512x384", "512x288", "480x360", "480x270", "320x240", "320x180", "160x120", "160x90"})},
+				{new JLabel("Bitrate"), new JComponent[] {new JComboBox(new String[]{"960", "800", "640", "320", "240", "120"}), new JLabel("Kbps")}},
+				{new JLabel("Fps"), new JComboBox(new String[]{"30.00", "29.97", "20.00", "15.00", "14.48", "8.00", "5.00", "3.00", "1.00"})},
 				{new JLabel("Audio"), new JComboBox(new String[]{"Aac", "Mp3"})},
 				{new JLabel("Bitrate"), new JComponent[] {new JComboBox(new String[]{"96", "64", "48", "40", "32"}), new JLabel("Kbps")}},
 				{new JLabel("Channel"), new JComboBox(new String[]{"Stereo", "Mono"})},
@@ -132,6 +131,7 @@ public class EncodeMixerModule implements IMixerModule {
 	public synchronized void setData(Object mediaData) {
 		// TODO ここでデータを監視して、リセットされたときに元に戻す必要がありそうだ。timestampが大きくずれているときの処理
 		if(MediaUtil.getTimestamp(mediaData) == 0) {
+			System.out.println("timestamp = 0");
 			if(zeroReset) {
 				// リセットがはいったので、なんとかしておかないとだめ。
 				videoWorker.close();

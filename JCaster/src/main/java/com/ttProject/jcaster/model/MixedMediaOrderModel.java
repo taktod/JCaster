@@ -63,6 +63,7 @@ public class MixedMediaOrderModel {
 	 * @param data
 	 */
 	public synchronized void addData(Object data) {
+		// ここでmetaTagが捨てられているのが問題。
 		if(data instanceof VideoTag) {
 			VideoTag vTag = (VideoTag) data;
 			if(vTag.getCodec() == CodecType.AVC && vTag.isMediaSequenceHeader()) {

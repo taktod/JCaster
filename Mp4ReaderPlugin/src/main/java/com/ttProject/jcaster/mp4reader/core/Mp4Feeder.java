@@ -11,6 +11,7 @@ import com.ttProject.media.extra.flv.FlvOrderModel;
 import com.ttProject.media.extra.mp4.IndexFileCreator;
 import com.ttProject.media.extra.mp4.Meta;
 import com.ttProject.media.flv.Tag;
+import com.ttProject.media.flv.tag.MetaTag;
 import com.ttProject.media.mp4.Atom;
 import com.ttProject.media.mp4.atom.Moov;
 import com.ttProject.nio.channels.FileReadChannel;
@@ -160,6 +161,10 @@ public class Mp4Feeder {
 			// 先頭から確認していって、転送すべきデータを送っておく。
 			Tag tag = null;
 			while(tagList.size() != 0 && (tag = tagList.removeFirst()) != null) {
+				// metaTagは捨てておく
+				if(tag instanceof MetaTag) {
+					continue;
+				}
 				// mediaSequenceHeaderがある場合はそのデータをコピーしておく
 				// このtagデータは先頭にmediaSequenceHeaderとmetaTagがある。
 				// とりあえずtimestampの問題はoutputPluginでなんとかするので、必要なのは送信データのみ。
