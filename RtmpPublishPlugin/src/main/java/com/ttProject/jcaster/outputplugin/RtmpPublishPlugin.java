@@ -51,4 +51,8 @@ public class RtmpPublishPlugin implements IPlugin {
 	public String toString() {
 		return "RtmpPublish";
 	}
+	@Override
+	public void onShutdown() {
+		
+	}
 }

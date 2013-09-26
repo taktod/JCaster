@@ -2,7 +2,9 @@ package com.ttProject.jcaster.controller;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.swing.JComboBox;
@@ -54,6 +56,8 @@ public class MainController extends Base implements ISwingMainBase, ActionListen
 	private IPlugin inputPlugin;
 	private IPlugin outputPlugin;
 	private IPlugin mixerPlugin;
+	
+	private List<IPlugin> pluginList = new ArrayList<IPlugin>();
 	/**
 	 * コンストラクタ
 	 * @param frame
@@ -83,6 +87,7 @@ public class MainController extends Base implements ISwingMainBase, ActionListen
 		logger.info("viewer用のtabPaneの構築を実施します。");
 		// viewerのPluginの設定をつくっていく。
 		for(final IPlugin plugin : pluginModel.getPlugins()) {
+			pluginList.add(plugin);
 			logger.info("処理plugin:" + plugin.toString());
 			if(plugin.getType() == Type.Viewer || plugin instanceof IViewerPlugin) {
 				IViewerPlugin vPlugin = (IViewerPlugin)plugin;
@@ -112,6 +117,7 @@ public class MainController extends Base implements ISwingMainBase, ActionListen
 	public void setupInputModule(JComboBox comboBox) {
 		logger.info("inputModule用のcomboboxを準備しておきます。");
 		for(IPlugin plugin : pluginModel.getPlugins()) {
+			pluginList.add(plugin);
 			if(plugin.getType() == Type.Input) {
 				comboBox.addItem(plugin);
 			}
@@ -123,6 +129,7 @@ public class MainController extends Base implements ISwingMainBase, ActionListen
 	public void setupOutputModule(JComboBox comboBox) {
 		logger.info("outputModule用のcomboboxを準備しておきます。");
 		for(IPlugin plugin : pluginModel.getPlugins()) {
+			pluginList.add(plugin);
 			if(plugin.getType() == Type.Output) {
 				comboBox.addItem(plugin);
 			}
@@ -134,6 +141,7 @@ public class MainController extends Base implements ISwingMainBase, ActionListen
 	public void setupMixerModule(JComboBox comboBox) {
 		logger.info("mixerModule用のcomboboxを準備しておきます。");
 		for(IPlugin plugin : pluginModel.getPlugins()) {
+			pluginList.add(plugin);
 			if(plugin.getType() == Type.Mixer) {
 				comboBox.addItem(plugin);
 			}
@@ -313,6 +321,11 @@ public class MainController extends Base implements ISwingMainBase, ActionListen
 				}
 				plugin.onActivated();
 			}
+		}
+	}
+	public void onShutdown() {
+		for(IPlugin plugin : pluginList) {
+			plugin.onShutdown();
 		}
 	}
 }

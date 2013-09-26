@@ -29,4 +29,8 @@ public class PlayViewer implements IViewerPlugin {
 	public String toString() {
 		return "Player";
 	}
+	@Override
+	public void onShutdown() {
+		module.onShutdown();
+	}
 }

@@ -53,4 +53,8 @@ public class Mp4ReaderPlugin implements IPlugin {
 	public String toString() {
 		return "Mp4Reader";
 	}
+	@Override
+	public void onShutdown() {
+		
+	}
 }

@@ -49,4 +49,8 @@ public class NoMixerPlugin implements IPlugin {
 	public String toString() {
 		return "None";
 	}
+	@Override
+	public void onShutdown() {
+		
+	}
 }

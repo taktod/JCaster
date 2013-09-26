@@ -1,13 +1,9 @@
-package com.ttProject.jcaster.mixer;
+package com.ttProject.jcaster.encode;
 
 import com.ttProject.jcaster.plugin.IPlugin;
 
 public class EncodeMixerPlugin implements IPlugin {
 	private final EncodeMixerModule module = new EncodeMixerModule();
-	@Override
-	public String versionId() {
-		return "0.0.1";
-	}
 	@Override
 	public Type getType() {
 		return Type.Mixer;
@@ -18,14 +14,17 @@ public class EncodeMixerPlugin implements IPlugin {
 	}
 	@Override
 	public void onDeactivated() {
-		module.remove();
 	}
 	@Override
 	public String toString() {
 		return "Encode";
 	}
 	@Override
+	public String versionId() {
+		return "0.0.1";
+	}
+	@Override
 	public void onShutdown() {
-		
+		module.onShutdown();
 	}
 }
