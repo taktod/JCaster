@@ -6,6 +6,8 @@ import java.util.Set;
 import com.ttProject.jcaster.model.MixedMediaOrderModel;
 import com.ttProject.jcaster.plugin.module.IOutputModule;
 import com.ttProject.media.flv.Tag;
+import com.ttProject.media.flv.tag.AudioTag;
+import com.ttProject.media.flv.tag.VideoTag;
 
 /**
  * 出力モジュールを管理するモジュール
@@ -74,11 +76,16 @@ public class OutputModule implements IOutputModule {
 			if(data instanceof Tag) {
 				tag = (Tag) data;
 				// TODO outputModuleでデータの変更を実行してしまうと、その影響がviewerModuleに渡したTagにも影響でてしまうということか・・・なるほど
+				for(IOutputModule module : viewerModules) {
+					if(tag instanceof VideoTag) {
+						module.setMixedData(((VideoTag)tag).clone());
+					}
+					else if(tag instanceof AudioTag) {
+						module.setMixedData(((AudioTag)tag).clone());
+					}
+				}
 				if(outputModule != null) {
 					outputModule.setMixedData(tag);
-				}
-				for(IOutputModule module : viewerModules) {
-					module.setMixedData(tag);
 				}
 			}
 		}

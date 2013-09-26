@@ -142,6 +142,7 @@ public class PlayViewerModule implements IViewerModule, IOutputModule {
 	}
 	@Override
 	public void setMixedData(Tag tag) {
+//		System.out.println(tag);
 		if(tag == null) {
 			return;
 		}
@@ -172,6 +173,8 @@ public class PlayViewerModule implements IViewerModule, IOutputModule {
 			processPos = tag.getTimestamp();
 			savePos = 0;
 		}
+		// やり直しになったと見る必要なさそう。
+		// ただしtimestamp = 0になったらやり直しとみてよさそう。
 		else if(Math.abs((processPos - tag.getTimestamp())) > 100) {
 			// 前後のticが100ミリsec以上はなれている場合はやり直しになったとみる。
 			// デコーダーを作り直す必要あり。
