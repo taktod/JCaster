@@ -1,9 +1,11 @@
 package com.ttProject.jcaster.model;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -18,7 +20,7 @@ import com.ttProject.jcaster.plugin.IPlugin;
 public class PluginModel {
 	private static final Logger logger = Logger.getLogger(PluginModel.class);
 	private final String fileSeparator = System.getProperty("file.separator");
-	private static Set<IPlugin> plugins = new HashSet<IPlugin>();
+	private static List<IPlugin> plugins = new ArrayList<IPlugin>();
 	/**
 	 * 利用可能なクラスについて調査しておく。
 	 */
@@ -56,12 +58,14 @@ public class PluginModel {
 				}
 			}
 		}
+		Collections.sort(plugins, new StringComparator());
+		Collections.sort(plugins, new OrderComparator());
 	}
 	/**
 	 * みつけたプラグインについて調べておく。
 	 * @return
 	 */
-	public Set<IPlugin> getPlugins() {
+	public List<IPlugin> getPlugins() {
 		return plugins;
 	}
 	/**
@@ -114,5 +118,17 @@ public class PluginModel {
 			}
 		}
 		return null;
+	}
+	private class StringComparator implements Comparator<IPlugin> {
+		@Override
+		public int compare(IPlugin o1, IPlugin o2) {
+			return o1.toString().compareTo(o2.toString());
+		}
+	}
+	private class OrderComparator implements Comparator<IPlugin> {
+		@Override
+		public int compare(IPlugin o1, IPlugin o2) {
+			return o1.getOrder() > o2.getOrder() ? -1 : (o1.getOrder() == o2.getOrder() ? 0 : 1);
+		}
 	}
 }

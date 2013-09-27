@@ -33,4 +33,8 @@ public class PlayViewer implements IViewerPlugin {
 	public void onShutdown() {
 		module.onShutdown();
 	}
+	@Override
+	public int getOrder() {
+		return 0;
+	}
 }

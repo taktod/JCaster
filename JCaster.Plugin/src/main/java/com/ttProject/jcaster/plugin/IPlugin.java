@@ -34,5 +34,14 @@ public interface IPlugin {
 		Mixer,
 		Viewer
 	}
+	/**
+	 * 終了時の処理
+	 */
 	public void onShutdown();
+	/**
+	 * プラグインの有効順設定
+	 * 数値が大きい方が前にきます。
+	 * @return
+	 */
+	public int getOrder();
 }

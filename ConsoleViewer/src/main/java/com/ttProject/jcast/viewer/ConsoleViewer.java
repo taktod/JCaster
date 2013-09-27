@@ -112,4 +112,8 @@ public class ConsoleViewer implements IViewerPlugin, ActionListener {
 	public void onShutdown() {
 		
 	}
+	@Override
+	public int getOrder() {
+		return -1;
+	}
 }

@@ -53,4 +53,9 @@ public class NoMixerPlugin implements IPlugin {
 	public void onShutdown() {
 		
 	}
+	@Override
+	public int getOrder() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 }

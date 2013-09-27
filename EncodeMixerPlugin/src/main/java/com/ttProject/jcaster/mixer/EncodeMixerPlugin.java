@@ -28,4 +28,8 @@ public class EncodeMixerPlugin implements IPlugin {
 	public void onShutdown() {
 		
 	}
+	@Override
+	public int getOrder() {
+		return 0;
+	}
 }
