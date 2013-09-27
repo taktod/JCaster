@@ -27,8 +27,18 @@ public class MixerModule implements IMixerModule {
 	/** viewerでうけとりたい場合のmixerModule */
 	private Set<IMixerModule> viewerModules = new HashSet<IMixerModule>();
 
+	/**
+	 * mediaデータのソートを実行するモデル
+	 */
 	private final MixedMediaOrderModel mixedMediaOrderModel = new MixedMediaOrderModel();
+	/**
+	 * ゼロにリセットするための動作フラグ
+	 */
 	private boolean zeroReset = true;
+	/**
+	 * 変換モジュールをセットする
+	 * @param module
+	 */
 	public void setMixerModule(IMixerModule module) {
 		mixerModule = module;
 		Tag tag = mixedMediaOrderModel.getAudioMshTag();
@@ -40,11 +50,19 @@ public class MixerModule implements IMixerModule {
 			mixerModule.setData(tag);
 		}
 	}
+	/**
+	 * 変換モジュールを撤去する
+	 * @param module
+	 */
 	public void removeMixerModule(IMixerModule module) {
 		if(mixerModule == module) {
 			mixerModule = null;
 		}
 	}
+	/**
+	 * 表示モジュールを設定する
+	 * @param module
+	 */
 	public void setViewerModule(IMixerModule module) {
 		viewerModules.add(module);
 		Tag tag = mixedMediaOrderModel.getAudioMshTag();
@@ -56,9 +74,16 @@ public class MixerModule implements IMixerModule {
 			module.setData(tag);
 		}
 	}
+	/**
+	 * 表示モジュールを撤去する
+	 * @param module
+	 */
 	public void removeViewerModule(IMixerModule module) {
 		viewerModules.remove(module);
 	}
+	/**
+	 * タイマーイベント
+	 */
 	@Override
 	public void onTimerEvent() {
 		// タイマーイベントは本家
@@ -66,15 +91,23 @@ public class MixerModule implements IMixerModule {
 			mixerModule.onTimerEvent();
 		}
 	}
+	/**
+	 * 出力モジュールを設定する
+	 */
 	@Override
 	public void registerOutputModule(IOutputModule outputModule) {
 		// 出力モジュールへの受け渡しは本家のmixerModuleのみ
 		if(mixerModule != null) {
+			// TODO ここで設定しているmixerモジュールはあたらしく変換モジュールを設定したときに付け替える必要がいちおうある。
 			mixerModule.registerOutputModule(outputModule);
 		}
 	}
+	/**
+	 * データを設置する。
+	 */
 	@Override
 	public void setData(Object mediaData) {
+		// timestampが0の場合はリセットする
 		if(MixedMediaOrderModel.getTimestamp(mediaData) == 0) {
 			if(zeroReset) { // timestamp = 0がきたらリセットする。
 				mixedMediaOrderModel.reset();
@@ -91,6 +124,7 @@ public class MixerModule implements IMixerModule {
 			if(mixerModule != null) {
 				mixerModule.setData(data);
 				// viewerModuleへの転送も追加する必要あり。(とりあえずあとでやる。)
+				// TODO オブジェクトのコピーが必要ですね。
 			}
 		}
 	}
