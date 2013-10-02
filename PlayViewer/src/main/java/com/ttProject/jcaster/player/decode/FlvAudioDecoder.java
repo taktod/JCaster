@@ -22,7 +22,9 @@ import com.xuggle.xuggler.IStreamCoder;
 /**
  * 音声をデコードして表示させる処理
  * @author taktod
- *
+ * TODO coderの停止動作がどうやらおかしいみたいです。
+ * releaseすべきなのだろうか？
+ * 一度こわれるとwindows8の場合再起動しないと復帰できなくなるので致命的
  */
 public class FlvAudioDecoder implements Runnable {
 	/** ロガー */
