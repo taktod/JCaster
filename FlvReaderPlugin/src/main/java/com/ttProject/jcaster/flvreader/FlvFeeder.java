@@ -145,7 +145,7 @@ public class FlvFeeder {
 			Tag tag = null;
 			while((tag = analyzer.analyze(source)) != null) {
 				tagList.addLast(tag);
-				if(tag.getTimestamp() > currentPos) {
+				if(tag.getTimestamp() + 1000 > currentPos) {
 					// 今回送信すべきデータ分送信がおわっているなら、ここまでとする。
 					break;
 				}

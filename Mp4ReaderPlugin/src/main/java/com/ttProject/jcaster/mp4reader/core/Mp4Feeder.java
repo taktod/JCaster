@@ -137,27 +137,30 @@ public class Mp4Feeder {
 		}
 		try {
 			long currentPos = System.currentTimeMillis() - startTime;
+			System.out.println(currentPos);
 			// 取得すべきtagのデータを保持する必要あり。
 			Tag lastTag = null;
 			while(true) {
+				// tagListに入っている最終データを確認して現在時刻より前だったら必要なデータを取りに行く。
+				if(tagList.size() != 0) {
+					lastTag = tagList.getLast();
+					// TODO １秒分だけ先に送信してOKということにしておきます。
+					if(lastTag.getTimestamp() + 1000 > currentPos) {
+						break;
+					}
+				}
+				// 取得したtagListはいったんlistにいれる。
 				List<Tag> list = orderModel.nextTagList(source);
 				if(list == null) {
 					// 再生がおわっているので、その処理を実行する。
 					break;
 				}
-				// 取得したtagListはいったんlistにいれる。
-				lastTag = null;
+				// 取得したデータはいったん再生待ちリストにいれます。
 				for(Tag tag : list) {
 					tagList.addLast(tag);
-					lastTag = tag;
-				}
-				if(lastTag == null) {
-					continue;
-				}
-				if(lastTag.getTimestamp() > currentPos) {
-					break;
 				}
 			}
+			System.out.println(lastTag);
 			// 先頭から確認していって、転送すべきデータを送っておく。
 			Tag tag = null;
 			while(tagList.size() != 0 && (tag = tagList.removeFirst()) != null) {
