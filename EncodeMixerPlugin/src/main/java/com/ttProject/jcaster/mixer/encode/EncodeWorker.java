@@ -129,7 +129,7 @@ public class EncodeWorker implements Runnable {
 		}
 	}
 	private void videoTagToVideoPicture(VideoTag tag) throws Exception {
-		IPacket packet = flvPacketizer.getPacket(tag);
+		IPacket packet = flvPacketizer.getPacket(tag, null);
 		if(packet == null) {
 			return;
 		}
@@ -158,7 +158,7 @@ public class EncodeWorker implements Runnable {
 		}
 	}
 	private void audioTagToAudioSamples(AudioTag tag) throws Exception {
-		IPacket packet = flvPacketizer.getPacket(tag);
+		IPacket packet = flvPacketizer.getPacket(tag, null);
 		if(packet == null) {
 			return;
 		}
