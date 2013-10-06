@@ -99,6 +99,7 @@ public class FlvAudioDecoder implements Runnable {
 		if(tag instanceof AudioTag) {
 			if(startTimestamp == -1) {
 				startTimestamp = tag.getTimestamp();
+				System.out.println("決定したstartTimestamp:" + startTimestamp);
 			}
 			dataQueue.add((AudioTag)tag);
 		}
@@ -185,14 +186,21 @@ public class FlvAudioDecoder implements Runnable {
 		}
 		catch (Exception e) {
 			logger.error("処理に失敗しました。", e);
+			e.printStackTrace();
 		}
+		System.out.println("停止処理やる。audio");
 		if(audioLine != null) {
+			System.out.println("audioLineしめ");
 			audioLine.close();
 			audioLine = null;
 		}
 		if(audioDecoder != null) {
+			System.out.println("audioDecoderしめ");
 			audioDecoder.close();
 			audioDecoder = null;
+		}
+		if(packet != null) {
+			packet.release();
 		}
 		samples = null;
 		vuLevel = 0;
