@@ -38,6 +38,8 @@ public class FlvVideoDecoder implements Runnable {
 	private final LinkedList<VideoData> videoDataQueue;
 	private IVideoPicture picture;
 	private long nextAcceptVideoTimestamp = -1;
+	private boolean waitingFlg = false;
+	private final IPacket packet = IPacket.make();
 	/**
 	 * コンストラクタ
 	 * @param audioDecoder
@@ -91,8 +93,10 @@ public class FlvVideoDecoder implements Runnable {
 	public void run() {
 		try {
 			while(workingFlg) {
+				waitingFlg = true;
 				VideoTag tag = dataQueue.take();
-				IPacket packet = packetizer.getPacket(tag);
+				waitingFlg = false;
+				IPacket packet = packetizer.getPacket(tag, this.packet);
 				if(packet == null) {
 					continue;
 				}
@@ -155,7 +159,9 @@ public class FlvVideoDecoder implements Runnable {
 	public void close() {
 		dataQueue.clear();
 		workingFlg = false;
-		worker.interrupt();
+		if(waitingFlg) {
+			worker.interrupt();
+		}
 	}
 	/**
 	 * 映像を更新する。
@@ -189,10 +195,6 @@ public class FlvVideoDecoder implements Runnable {
 		}
 	}
 	public void onShutdown() {
-		if(videoDecoder != null) {
-			videoDecoder.close();
-			videoDecoder = null;
-		}
 		close();
 	}
 }

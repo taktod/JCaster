@@ -51,6 +51,8 @@ public class FlvAudioDecoder implements Runnable {
 	private long startTimestamp = -1; // はじめのaudioTagの位置を設定
 	private int vuLevel = 0;
 	private IAudioSamples samples = null;
+	private boolean waitingFlg = false;
+	private final IPacket packet = IPacket.make();
 	/**
 	 * コンストラクタ
 	 */
@@ -110,7 +112,9 @@ public class FlvAudioDecoder implements Runnable {
 		// threadの停止を促します。
 		workingFlg = false;
 		// ロックされている部分は解放しておく。
-		worker.interrupt();
+		if(waitingFlg) {
+			worker.interrupt();
+		}
 	}
 	/**
 	 * 処理
@@ -119,8 +123,10 @@ public class FlvAudioDecoder implements Runnable {
 	public void run() {
 		try {
 			while(workingFlg) {
+				waitingFlg = true;
 				AudioTag tag = dataQueue.take();
-				IPacket packet = packetizer.getPacket(tag);
+				waitingFlg = false;
+				IPacket packet = packetizer.getPacket(tag, this.packet);
 				if(packet == null) {
 					continue;
 				}
@@ -192,10 +198,10 @@ public class FlvAudioDecoder implements Runnable {
 		vuLevel = 0;
 	}
 	public void onShutdown() {
-		if(audioDecoder != null) {
-			audioDecoder.close();
-			audioDecoder = null;
-		}
+//		if(audioDecoder != null) {
+//			audioDecoder.close();
+//			audioDecoder = null;
+//		}
 		close();
 	}
 }
