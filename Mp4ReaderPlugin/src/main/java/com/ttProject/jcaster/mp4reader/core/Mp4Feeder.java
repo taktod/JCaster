@@ -145,7 +145,7 @@ public class Mp4Feeder {
 				if(tagList.size() != 0) {
 					lastTag = tagList.getLast();
 					// TODO １秒分だけ先に送信してOKということにしておきます。
-					if(lastTag.getTimestamp() + 1000 > currentPos) {
+					if(lastTag.getTimestamp() > currentPos + 1000) {
 						break;
 					}
 				}
@@ -174,6 +174,9 @@ public class Mp4Feeder {
 				// mainBaseにデータを送信する。
 				// tagをみつけた場合はbaseにおくっておく。
 				passedTimestamp = tag.getTimestamp();
+				if(passedTimestamp > currentPos + 1000) {
+					break;
+				}
 				if(targetModule != null) {
 					if(startTimestamp == -1) {
 						startTimestamp = tag.getTimestamp() - 1;
