@@ -9,6 +9,7 @@ import com.ttProject.jcaster.player.swing.VideoComponent;
 import com.ttProject.media.flv.Tag;
 import com.ttProject.media.flv.tag.AudioTag;
 import com.ttProject.media.flv.tag.VideoTag;
+import com.xuggle.xuggler.IPacket;
 
 /**
  * flvのデコードを実行して再生する処理
@@ -29,6 +30,7 @@ public class FlvDecoder {
 	 * コンストラクタ
 	 */
 	public FlvDecoder() {
+		IPacket.make();
 		resetAudioDecoder();
 		resetVideoDecoder();
 	}
