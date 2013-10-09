@@ -64,7 +64,13 @@ public class FlvDecoder {
 			audioDecoder.close();
 			audioDecoder = null;
 		}
-		audioDecoder = new FlvAudioDecoder();
+		try {
+			// TODO 例外時の処理をきちんとかかないとだめ。
+			audioDecoder = new FlvAudioDecoder();
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
 		audioDecoder.setVolume(volume);
 		// audioDecoderを更新しておく。
 		if(videoDecoder != null) {

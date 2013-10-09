@@ -15,6 +15,7 @@ import com.ttProject.media.flv.Tag;
 import com.ttProject.media.flv.tag.AudioTag;
 import com.ttProject.util.BufferUtil;
 import com.ttProject.xuggle.flv.FlvPacketizer;
+import com.xuggle.xuggler.IAudioResampler;
 import com.xuggle.xuggler.IAudioSamples;
 import com.xuggle.xuggler.IPacket;
 import com.xuggle.xuggler.IStreamCoder;
@@ -53,12 +54,20 @@ public class FlvAudioDecoder implements Runnable {
 	private IAudioSamples samples = null;
 	private boolean waitingFlg = false;
 	private final IPacket packet = IPacket.make();
+	private boolean isAudioLineReady = false;
+	private IAudioResampler resampler = null;
 	/**
 	 * コンストラクタ
 	 */
-	public FlvAudioDecoder() {
+	public FlvAudioDecoder() throws Exception {
 		dataQueue = new LinkedBlockingQueue<AudioTag>();
 		packetizer = new FlvPacketizer();
+		// audioLineを44100Hz 16bit 2chでつくってみる。
+		audioFormat = new AudioFormat(44100, 16, 2, true, false);
+		DataLine.Info info = new DataLine.Info(SourceDataLine.class, audioFormat);
+		audioLine = (SourceDataLine)AudioSystem.getLine(info);
+		audioLine.open(audioFormat);
+		audioLine.start();
 		worker = new Thread(this);
 		worker.setDaemon(true);
 		worker.setName("audioPlayViewerWorker");
@@ -69,6 +78,9 @@ public class FlvAudioDecoder implements Runnable {
 	 * @return
 	 */
 	public long getTimestamp() {
+		if(!isAudioLineReady) {
+			return -1;
+		}
 		if(audioLine == null) {
 			return -1;
 		}
@@ -79,6 +91,9 @@ public class FlvAudioDecoder implements Runnable {
 	 * @return
 	 */
 	public int getVolumeLevel() {
+		if(!isAudioLineReady) {
+			return 0;
+		}
 		if(audioLine == null) {
 			return 0;
 		}
@@ -101,7 +116,9 @@ public class FlvAudioDecoder implements Runnable {
 				startTimestamp = tag.getTimestamp();
 				System.out.println("決定したstartTimestamp:" + startTimestamp);
 			}
-			dataQueue.add((AudioTag)tag);
+			synchronized(dataQueue) {
+				dataQueue.add((AudioTag)tag);
+			}
 		}
 	}
 	/**
@@ -124,9 +141,18 @@ public class FlvAudioDecoder implements Runnable {
 	public void run() {
 		try {
 			while(workingFlg) {
-				waitingFlg = true;
-				AudioTag tag = dataQueue.take();
-				waitingFlg = false;
+				AudioTag tag = null;
+				synchronized(dataQueue) {
+					if(dataQueue.size() != 0) {
+						tag = dataQueue.poll();
+					}
+				}
+				if(tag == null) {
+					waitingFlg = true;
+					Thread.sleep(10);
+					waitingFlg = false;
+					continue;
+				}
 				IPacket packet = packetizer.getPacket(tag, this.packet);
 				if(packet == null) {
 					continue;
@@ -135,32 +161,50 @@ public class FlvAudioDecoder implements Runnable {
 						lastAudioTag.getCodec() != tag.getCodec() || 
 						lastAudioTag.getChannels() != tag.getChannels() ||
 						lastAudioTag.getSampleRate() != tag.getSampleRate()) {
+					isAudioLineReady = false;
 					audioDecoder = packetizer.createAudioDecoder();
-					if(audioLine != null) {
-						audioLine.close();
-						audioLine = null;
-					}
-					// デコーダーが更新されているのでaudioLineも更新する。
-					audioFormat = new AudioFormat(audioDecoder.getSampleRate(),
-							(int)IAudioSamples.findSampleBitDepth(audioDecoder.getSampleFormat()),
-							audioDecoder.getChannels(), true, false);
-					DataLine.Info info = new DataLine.Info(SourceDataLine.class, audioFormat);
-					audioLine = (SourceDataLine)AudioSystem.getLine(info);
-					audioLine.open(audioFormat);
-					audioLine.start();
+					System.out.println(audioDecoder);
+					// 出力lineと合わない場合はリサンプルする必要あり。
+//					if(audioLine != null) {
+//						audioLine.close();
+//						audioLine = null;
+//					}
+//					System.out.println("ここまでこれた。");
+//					// デコーダーが更新されているのでaudioLineも更新する。(これ・・・時間かかるっぽい)先にセットアップさせたらどうだろう？
+//					audioFormat = new AudioFormat(audioDecoder.getSampleRate(),
+//							(int)IAudioSamples.findSampleBitDepth(audioDecoder.getSampleFormat()),
+//							audioDecoder.getChannels(), true, false);
+//					DataLine.Info info = new DataLine.Info(SourceDataLine.class, audioFormat);
+//					audioLine = (SourceDataLine)AudioSystem.getLine(info);
+//					audioLine.open(audioFormat);
+//					audioLine.start();
+//					System.out.println("ここまでこれた。2");
 				}
 				lastAudioTag = tag;
 				int offset = 0;
-//				if(samples == null) {
+				if(samples == null) {
 					samples = IAudioSamples.make(1024, audioDecoder.getChannels());
-//				}
+				}
+				System.out.println("デコードループに入ります。");
 				while(offset < packet.getSize()) {
-					int bytesDecoded = audioDecoder.decodeAudio(samples, packet, offset);
+					int bytesDecoded = 0;
+//					synchronized(this) {
+						System.out.println("デコードします");
+						bytesDecoded = audioDecoder.decodeAudio(samples, packet, offset);
+						System.out.println("デコードしますた");
+//					}
 					if(bytesDecoded < 0) {
 						throw new Exception("デコード中にエラーが発生");
 					}
 					offset += bytesDecoded;
 					if(samples.isComplete()) {
+						// この部分でsamplesのデータとaudioFormatが合わなければリサンプルする必要あり。
+						if(samples.getChannels() != audioFormat.getChannels()
+								|| samples.getSampleBitDepth() != audioFormat.getSampleSizeInBits()
+								|| samples.getSampleRate() != audioFormat.getSampleRate()) {
+							// これらが一致しない場合はリサンプルする必要あり。
+							System.out.println("一致しないのでリサンプルしないとだめ。");
+						}
 						// TODO サンプリングデータ量と無音空間を計算して、無音部がある場合は挿入する必要あり。
 						/*
 						 * すでに完了した経過時間を計算しておいて、経過時間とtagのtimestampが一致しない場合は無音用のデータを挿入する必要あり。
@@ -178,7 +222,12 @@ public class FlvAudioDecoder implements Runnable {
 						if(audioLine != null) {
 							audioLine.write(BufferUtil.toByteArray(volumedBuffer), 0, samples.getSize());
 //							audioLine.write(volumedBuffer.array(), 0, samples.getSize());
+							if(!isAudioLineReady) {
+								System.out.println("音声データ注入しました");
+							}
+							isAudioLineReady = true;
 						}
+//						samples.release();
 //						samples = null;
 					}
 				}
@@ -201,6 +250,9 @@ public class FlvAudioDecoder implements Runnable {
 		}
 		if(packet != null) {
 			packet.release();
+		}
+		if(samples != null) {
+			samples.release();
 		}
 		samples = null;
 		vuLevel = 0;

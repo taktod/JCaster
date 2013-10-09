@@ -83,7 +83,9 @@ public class FlvVideoDecoder implements Runnable {
 	 */
 	public void addTag(Tag tag) {
 		if(tag instanceof VideoTag) {
-			dataQueue.add((VideoTag)tag);
+			synchronized(dataQueue) {
+				dataQueue.add((VideoTag)tag);
+			}
 		}
 	}
 	/**
@@ -93,9 +95,18 @@ public class FlvVideoDecoder implements Runnable {
 	public void run() {
 		try {
 			while(workingFlg) {
-				waitingFlg = true;
-				VideoTag tag = dataQueue.take();
-				waitingFlg = false;
+				VideoTag tag = null;
+				synchronized(dataQueue) {
+					if(dataQueue.size() != 0) {
+						tag = dataQueue.poll();
+					}
+				}
+				if(tag == null) {
+					waitingFlg = true;
+					Thread.sleep(10);
+					waitingFlg = false;
+					continue;
+				}
 				IPacket packet = packetizer.getPacket(tag, this.packet);
 				if(packet == null) {
 					continue;
@@ -110,8 +121,14 @@ public class FlvVideoDecoder implements Runnable {
 					if(picture == null) {
 						picture = IVideoPicture.make(videoDecoder.getPixelType(), videoDecoder.getWidth(), videoDecoder.getHeight());
 					}
-					int bytesDecoded = videoDecoder.decodeVideo(picture, packet, offset);
+					int bytesDecoded = 0;
+//					synchronized(audioDecoder) {
+						System.out.println("映像デコードします。");
+						bytesDecoded = videoDecoder.decodeVideo(picture, packet, offset);
+						System.out.println("映像デコードしますた。");
+//					}
 					if(bytesDecoded < 0) {
+						System.out.println("デコード中に問題発生。");
 //						throw new Exception("映像のデコード中に問題が発生しました。");
 						break;
 					}
@@ -138,7 +155,7 @@ public class FlvVideoDecoder implements Runnable {
 						if(nextAcceptVideoTimestamp < 40 + tag.getTimestamp()) {
 							nextAcceptVideoTimestamp = 40 + tag.getTimestamp();
 						}
-						picture = null;
+//						picture = null;
 					}
 				}
 				updatePicture();
@@ -157,6 +174,9 @@ public class FlvVideoDecoder implements Runnable {
 		// TODO xuggleのオブジェクトはreleaseしておいた方がよさそうですね。メモリーの参照カウントが解放されないのかも・・・
 		if(packet != null) {
 			packet.release();
+		}
+		if(picture != null) {
+			picture.release();
 		}
 		videoDataQueue.clear();
 	}
