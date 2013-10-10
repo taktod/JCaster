@@ -10,7 +10,7 @@ import org.junit.Test;
  *
  */
 public class TakeTest {
-	@Test
+//	@Test
 	public void test() throws Exception {
 		System.out.println("test start");
 		final LinkedBlockingQueue<String> data = new LinkedBlockingQueue<String>();

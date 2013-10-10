@@ -122,11 +122,7 @@ public class FlvVideoDecoder implements Runnable {
 						picture = IVideoPicture.make(videoDecoder.getPixelType(), videoDecoder.getWidth(), videoDecoder.getHeight());
 					}
 					int bytesDecoded = 0;
-//					synchronized(audioDecoder) {
-						System.out.println("映像デコードします。");
-						bytesDecoded = videoDecoder.decodeVideo(picture, packet, offset);
-						System.out.println("映像デコードしますた。");
-//					}
+					bytesDecoded = videoDecoder.decodeVideo(picture, packet, offset);
 					if(bytesDecoded < 0) {
 						System.out.println("デコード中に問題発生。");
 //						throw new Exception("映像のデコード中に問題が発生しました。");
@@ -157,6 +153,7 @@ public class FlvVideoDecoder implements Runnable {
 						}
 //						picture = null;
 					}
+					Thread.sleep(10);
 				}
 				updatePicture();
 			}
@@ -203,16 +200,16 @@ public class FlvVideoDecoder implements Runnable {
 			if(timestamp != -1 && vData.getTimestamp() > timestamp) {
 				if(dataQueue.size() == 0) {
 					if(videoData != null) {
-						System.out.print("target Timestamp:" + timestamp);
-						System.out.println(" avideo timestamp:" + videoData.getTimestamp());
+//						System.out.print("target Timestamp:" + timestamp);
+//						System.out.println(" avideo timestamp:" + videoData.getTimestamp());
 						component.setImage(videoData.getImage());
 						videoData = null;
 					}
 					// データqueueが存在していない場合は、次のtimestampまで待ってデータを吐いてもいいと思う。
 					try {
-						System.out.println("try sleep");
+//						System.out.println("try sleep");
 						long sleepLength = vData.getTimestamp() - audioDecoder.getTimestamp();
-						System.out.println("sleepLength:" + sleepLength);
+//						System.out.println("sleepLength:" + sleepLength);
 						Thread.sleep(sleepLength);
 						if(vData.getTimestamp() < audioDecoder.getTimestamp()) {
 							videoData = videoDataQueue.removeFirst();
@@ -226,13 +223,12 @@ public class FlvVideoDecoder implements Runnable {
 			}
 			videoData = videoDataQueue.removeFirst();
 		}
-		System.out.print("target Timestamp:" + timestamp);
 		if(videoData != null) {
-			System.out.println(" bvideo timestamp:" + videoData.getTimestamp());
+//			System.out.println(" bvideo timestamp:" + videoData.getTimestamp());
 			component.setImage(videoData.getImage());
 		}
 		else {
-			System.out.println(" none");
+//			System.out.println(" none");
 		}
 	}
 	public void onShutdown() {

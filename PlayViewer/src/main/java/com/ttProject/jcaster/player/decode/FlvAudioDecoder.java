@@ -163,7 +163,6 @@ public class FlvAudioDecoder implements Runnable {
 						lastAudioTag.getSampleRate() != tag.getSampleRate()) {
 					isAudioLineReady = false;
 					audioDecoder = packetizer.createAudioDecoder();
-					System.out.println(audioDecoder);
 					// 出力lineと合わない場合はリサンプルする必要あり。
 //					if(audioLine != null) {
 //						audioLine.close();
@@ -185,13 +184,13 @@ public class FlvAudioDecoder implements Runnable {
 				if(samples == null) {
 					samples = IAudioSamples.make(1024, audioDecoder.getChannels());
 				}
-				System.out.println("デコードループに入ります。");
+//				System.out.println("デコードループに入ります。");
 				while(offset < packet.getSize()) {
 					int bytesDecoded = 0;
 //					synchronized(this) {
-						System.out.println("デコードします");
+//						System.out.println("デコードします");
 						bytesDecoded = audioDecoder.decodeAudio(samples, packet, offset);
-						System.out.println("デコードしますた");
+//						System.out.println("デコードしますた");
 //					}
 					if(bytesDecoded < 0) {
 						throw new Exception("デコード中にエラーが発生");
@@ -230,6 +229,7 @@ public class FlvAudioDecoder implements Runnable {
 //						samples.release();
 //						samples = null;
 					}
+					Thread.sleep(10);
 				}
 			}
 		}

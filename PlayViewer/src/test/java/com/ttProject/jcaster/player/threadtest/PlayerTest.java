@@ -30,14 +30,14 @@ import com.xuggle.ferry.JNIMemoryManager;
 public class PlayerTest {
 	private boolean workingFlg = true;
 	static {
-		JNIMemoryManager manager = JNIMemoryManager.getMgr();
-		System.out.println(manager.getExpandIncrement());
-		System.out.println(manager.getMaxFreeRatio());
-		System.out.println(manager.getMinFreeRatio());
-		System.out.println(manager.getMinimumReferencesToCache());
-		System.out.println(manager.getNumPinnedObjects());
-		System.out.println(manager.getShrinkFactor());
-		manager.gc();
+//		JNIMemoryManager manager = JNIMemoryManager.getMgr();
+//		System.out.println(manager.getExpandIncrement());
+//		System.out.println(manager.getMaxFreeRatio());
+//		System.out.println(manager.getMinFreeRatio());
+//		System.out.println(manager.getMinimumReferencesToCache());
+//		System.out.println(manager.getNumPinnedObjects());
+//		System.out.println(manager.getShrinkFactor());
+//		manager.gc();
 //		System.gc();
 	}
 	/**
@@ -69,7 +69,7 @@ public class PlayerTest {
 		 * とりあえずいきなり本家でつくるとややこしいので、それぞれのクラスをつくってやっていこうと思う
 		 */
 		ITagAnalyzer analyzer = new TagAnalyzer();
-		IFileReadChannel ch = FileReadChannel.openFileReadChannel("http://49.212.39.17/mario.flv");
+		IFileReadChannel ch = FileReadChannel.openFileReadChannel("http://49.212.39.17/smile.flv");
 		FlvHeader header = new FlvHeader();
 		header.analyze(ch);
 		FlvDecoder flvDecoder = new FlvDecoder();
@@ -137,7 +137,7 @@ public class PlayerTest {
 		analyzer.close();
 
 		IFileReadChannel tmp = FileReadChannel.openFileReadChannel(tmpFile.getAbsolutePath());
-		FlvOrderModel orderModel = new FlvOrderModel(tmp, true, true, 230000);
+		FlvOrderModel orderModel = new FlvOrderModel(tmp, true, true, 1030000);
 		FlvDecoder flvDecoder = new FlvDecoder();
 		frame.add(flvDecoder.getComponent());
 		List<Tag> tagList = null;
@@ -145,23 +145,21 @@ public class PlayerTest {
 		// tagのデータを現在時刻から、1秒先のものに限定しておく。
 		while(workingFlg && (tagList = orderModel.nextTagList(ch)) != null) {
 			for(Tag tag : tagList) {
-				System.out.println(tag);
 				if(!workingFlg) {
 					break;
 				}
 				if(startTime == -1) {
 					// 現在時刻保持
 					startTime = System.currentTimeMillis() - tag.getTimestamp();
-					System.out.println("startTime:" + startTime);
 				}
 				// 転送していいデータの範囲を計算しておく。
 				long passedTime = System.currentTimeMillis() - startTime + 1000;
 				if(tag.getTimestamp() > passedTime) {
-					System.out.println("sleepTime:" + (tag.getTimestamp() - passedTime));
 					// 表示していい時間ではなければsleepでちょっと待たせる。
 					Thread.sleep(tag.getTimestamp() - passedTime);
 				}
 				flvDecoder.addTag(tag);
+//				Thread.sleep(0);
 			}
 		}
 		tmp.close();
