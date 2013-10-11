@@ -31,7 +31,7 @@ public class PlayerTest {
 	/**
 	 * テスト
 	 */
-//	@Test
+	@Test
 	public void flvtest() throws Exception {
 		workingFlg = true;
 		TestFrame frame = new TestFrame();
@@ -57,7 +57,7 @@ public class PlayerTest {
 		 * とりあえずいきなり本家でつくるとややこしいので、それぞれのクラスをつくってやっていこうと思う
 		 */
 		ITagAnalyzer analyzer = new TagAnalyzer();
-		IFileReadChannel ch = FileReadChannel.openFileReadChannel("http://49.212.39.17/smile.flv");
+		IFileReadChannel ch = FileReadChannel.openFileReadChannel("http://49.212.39.17/mario.flv");
 		FlvHeader header = new FlvHeader();
 		header.analyze(ch);
 		FlvDecoder flvDecoder = new FlvDecoder();
@@ -84,7 +84,7 @@ public class PlayerTest {
 	/**
 	 * テスト
 	 */
-	@Test
+//	@Test
 	public void mp4test() throws Exception {
 //		Thread.sleep(10000);
 		workingFlg = true;

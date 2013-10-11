@@ -22,10 +22,8 @@ import com.xuggle.xuggler.IStreamCoder;
 
 /**
  * 音声をデコードして表示させる処理
+ * TODO あとは無音空間がある場合に、どうするかの処理を書き足す必要あり。
  * @author taktod
- * TODO coderの停止動作がどうやらおかしいみたいです。
- * releaseすべきなのだろうか？
- * 一度こわれるとwindows8の場合再起動しないと復帰できなくなるので致命的
  */
 public class FlvAudioDecoder implements Runnable {
 	/** ロガー */
@@ -163,35 +161,15 @@ public class FlvAudioDecoder implements Runnable {
 						lastAudioTag.getSampleRate() != tag.getSampleRate()) {
 					isAudioLineReady = false;
 					audioDecoder = packetizer.createAudioDecoder();
-					// 出力lineと合わない場合はリサンプルする必要あり。
-//					if(audioLine != null) {
-//						audioLine.close();
-//						audioLine = null;
-//					}
-//					System.out.println("ここまでこれた。");
-//					// デコーダーが更新されているのでaudioLineも更新する。(これ・・・時間かかるっぽい)先にセットアップさせたらどうだろう？
-//					audioFormat = new AudioFormat(audioDecoder.getSampleRate(),
-//							(int)IAudioSamples.findSampleBitDepth(audioDecoder.getSampleFormat()),
-//							audioDecoder.getChannels(), true, false);
-//					DataLine.Info info = new DataLine.Info(SourceDataLine.class, audioFormat);
-//					audioLine = (SourceDataLine)AudioSystem.getLine(info);
-//					audioLine.open(audioFormat);
-//					audioLine.start();
-//					System.out.println("ここまでこれた。2");
 				}
 				lastAudioTag = tag;
 				int offset = 0;
 				if(samples == null) {
 					samples = IAudioSamples.make(1024, audioDecoder.getChannels());
 				}
-//				System.out.println("デコードループに入ります。");
 				while(offset < packet.getSize()) {
 					int bytesDecoded = 0;
-//					synchronized(this) {
-//						System.out.println("デコードします");
-						bytesDecoded = audioDecoder.decodeAudio(samples, packet, offset);
-//						System.out.println("デコードしますた");
-//					}
+					bytesDecoded = audioDecoder.decodeAudio(samples, packet, offset);
 					if(bytesDecoded < 0) {
 						throw new Exception("デコード中にエラーが発生");
 					}
@@ -202,7 +180,18 @@ public class FlvAudioDecoder implements Runnable {
 								|| samples.getSampleBitDepth() != audioFormat.getSampleSizeInBits()
 								|| samples.getSampleRate() != audioFormat.getSampleRate()) {
 							// これらが一致しない場合はリサンプルする必要あり。
-							System.out.println("一致しないのでリサンプルしないとだめ。");
+							if(resampler == null ||
+									resampler.getInputChannels() != samples.getChannels() ||
+									resampler.getInputFormat() != samples.getFormat() ||
+									resampler.getInputRate() != samples.getSampleRate()) {
+								System.out.println("リサンプラを作り直す必要あり。");
+								resampler = IAudioResampler.make(audioFormat.getChannels(), samples.getChannels(),
+										(int)audioFormat.getSampleRate(), samples.getSampleRate());
+							}
+							IAudioSamples sampledData = IAudioSamples.make(1024, resampler.getOutputChannels());
+							if(resampler.resample(sampledData, samples, samples.getSize()) < 0) {
+								throw new Exception("リサンプルでエラーが発生しました。");
+							}
 						}
 						// TODO サンプリングデータ量と無音空間を計算して、無音部がある場合は挿入する必要あり。
 						/*
@@ -220,14 +209,11 @@ public class FlvAudioDecoder implements Runnable {
 						volumedBuffer.flip();
 						if(audioLine != null) {
 							audioLine.write(BufferUtil.toByteArray(volumedBuffer), 0, samples.getSize());
-//							audioLine.write(volumedBuffer.array(), 0, samples.getSize());
 							if(!isAudioLineReady) {
 								System.out.println("音声データ注入しました");
 							}
 							isAudioLineReady = true;
 						}
-//						samples.release();
-//						samples = null;
 					}
 					Thread.sleep(10);
 				}
