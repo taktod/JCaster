@@ -2,8 +2,6 @@ package com.ttProject.jcaster.player.threadtest;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.junit.Test;
-
 /**
  * 
  * @author taktod

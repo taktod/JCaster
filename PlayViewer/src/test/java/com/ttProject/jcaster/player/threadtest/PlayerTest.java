@@ -21,7 +21,6 @@ import com.ttProject.media.mp4.atom.Moov;
 import com.ttProject.nio.channels.FileReadChannel;
 import com.ttProject.nio.channels.IFileReadChannel;
 import com.ttProject.util.TmpFile;
-import com.xuggle.ferry.JNIMemoryManager;
 
 /**
  * 実際に動画の再生を実施する動作テスト
@@ -29,17 +28,6 @@ import com.xuggle.ferry.JNIMemoryManager;
  */
 public class PlayerTest {
 	private boolean workingFlg = true;
-	static {
-//		JNIMemoryManager manager = JNIMemoryManager.getMgr();
-//		System.out.println(manager.getExpandIncrement());
-//		System.out.println(manager.getMaxFreeRatio());
-//		System.out.println(manager.getMinFreeRatio());
-//		System.out.println(manager.getMinimumReferencesToCache());
-//		System.out.println(manager.getNumPinnedObjects());
-//		System.out.println(manager.getShrinkFactor());
-//		manager.gc();
-//		System.gc();
-	}
 	/**
 	 * テスト
 	 */
@@ -137,7 +125,7 @@ public class PlayerTest {
 		analyzer.close();
 
 		IFileReadChannel tmp = FileReadChannel.openFileReadChannel(tmpFile.getAbsolutePath());
-		FlvOrderModel orderModel = new FlvOrderModel(tmp, true, true, 1030000);
+		FlvOrderModel orderModel = new FlvOrderModel(tmp, true, true, 1430000);
 		FlvDecoder flvDecoder = new FlvDecoder();
 		frame.add(flvDecoder.getComponent());
 		List<Tag> tagList = null;
