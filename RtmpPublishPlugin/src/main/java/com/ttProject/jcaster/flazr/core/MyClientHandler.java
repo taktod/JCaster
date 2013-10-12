@@ -172,6 +172,8 @@ public class MyClientHandler extends ClientHandler {
 				}
 			}
 			break;
+		default:
+			break;
 		}
 		// その他のメッセージは元のClientHandlerにゆだねる
 		super.messageReceived(ctx, me);
