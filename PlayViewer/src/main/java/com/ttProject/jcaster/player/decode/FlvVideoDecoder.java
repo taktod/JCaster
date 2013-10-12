@@ -37,7 +37,7 @@ public class FlvVideoDecoder implements Runnable {
 	private FlvAudioDecoder audioDecoder;
 	private final LinkedList<VideoData> videoDataQueue;
 	private IVideoPicture picture;
-	private long nextAcceptVideoTimestamp = -1;
+//	private long nextAcceptVideoTimestamp = -1;
 	private boolean waitingFlg = false;
 	private final IPacket packet = IPacket.make();
 	/**
@@ -132,11 +132,12 @@ public class FlvVideoDecoder implements Runnable {
 					if(picture.isComplete()) {
 						IVideoPicture newPic = picture;
 						// フレームのスキップを実装しておかないと、処理の重いフレームにあたるとアウトになる。
-						if(tag.getTimestamp() < nextAcceptVideoTimestamp) {
-//							System.out.println("時間がかかりすぎているので、スキップする。");
+						long timestamp = audioDecoder.getTimestamp();
+						if(tag.getTimestamp() < timestamp) {
+							System.out.println("時間がかかりすぎているので、スキップする。");
 							continue;
 						}
-						long startTime = System.currentTimeMillis();
+//						long startTime = System.currentTimeMillis();
 						if(picture.getPixelType() != IPixelFormat.Type.BGR24) {
 							IVideoResampler resampler = IVideoResampler.make(videoDecoder.getWidth(), videoDecoder.getHeight(), IPixelFormat.Type.BGR24, picture.getWidth(), picture.getHeight(), picture.getPixelType());
 							newPic = IVideoPicture.make(resampler.getOutputPixelFormat(), resampler.getOutputWidth(), resampler.getOutputHeight());
@@ -147,13 +148,9 @@ public class FlvVideoDecoder implements Runnable {
 						IConverter converter = ConverterFactory.createConverter("XUGGLER-BGR-24", newPic);
 //						component.setImage(converter.toImage(newPic));
 						videoDataQueue.add(new VideoData(converter.toImage(newPic), tag.getTimestamp()));
-						nextAcceptVideoTimestamp = System.currentTimeMillis() - startTime + tag.getTimestamp();
-						if(nextAcceptVideoTimestamp < 40 + tag.getTimestamp()) {
-							nextAcceptVideoTimestamp = 40 + tag.getTimestamp();
-						}
 //						picture = null;
 					}
-					Thread.sleep(10);
+//					Thread.sleep(10);
 				}
 				updatePicture();
 			}

@@ -71,7 +71,7 @@ public class PlayerTest {
 				startTime = System.currentTimeMillis();
 			}
 			// 転送していいデータの範囲を計算しておく。
-			long passedTime = System.currentTimeMillis() - startTime + 500;
+			long passedTime = System.currentTimeMillis() - startTime + 1000;
 			if(tag.getTimestamp() > passedTime) {
 				// 表示していい時間ではなければsleepでちょっと待たせる。
 				Thread.sleep(tag.getTimestamp() - passedTime);

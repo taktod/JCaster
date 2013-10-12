@@ -98,6 +98,7 @@ public class FlvDecoder {
 				}
 				tagList.clear();
 			}
+			return;
 		}
 		if(tag instanceof AudioTag) {
 			audioDecoder.addTag(tag);

@@ -132,6 +132,7 @@ public class FlvAudioDecoder implements Runnable {
 			worker.interrupt();
 		}
 	}
+	long passedSampleCount = 0;
 	/**
 	 * 処理
 	 */
@@ -151,6 +152,8 @@ public class FlvAudioDecoder implements Runnable {
 					waitingFlg = false;
 					continue;
 				}
+				// ここですでに再生にまわしたtimestampと実際のtagのtimestampの差分値がわかります。
+//				System.out.println(tag.getTimestamp() - passedSampleCount / 44.1F);
 				IPacket packet = packetizer.getPacket(tag, this.packet);
 				if(packet == null) {
 					continue;
@@ -192,6 +195,7 @@ public class FlvAudioDecoder implements Runnable {
 							if(resampler.resample(sampledData, samples, samples.getSize()) < 0) {
 								throw new Exception("リサンプルでエラーが発生しました。");
 							}
+							samples = sampledData;
 						}
 						// TODO サンプリングデータ量と無音空間を計算して、無音部がある場合は挿入する必要あり。
 						/*
@@ -207,15 +211,18 @@ public class FlvAudioDecoder implements Runnable {
 							volumedBuffer.putShort((short)(buffer.getShort() * volume / 100));
 						}
 						volumedBuffer.flip();
+						// 追加されたサンプルカウントをbyte数から計算しておく。
+						passedSampleCount += volumedBuffer.remaining() / 4;
 						if(audioLine != null) {
 							audioLine.write(BufferUtil.toByteArray(volumedBuffer), 0, samples.getSize());
 							if(!isAudioLineReady) {
 								System.out.println("音声データ注入しました");
 							}
+							
 							isAudioLineReady = true;
 						}
 					}
-					Thread.sleep(10);
+//					Thread.sleep(10);
 				}
 			}
 		}
