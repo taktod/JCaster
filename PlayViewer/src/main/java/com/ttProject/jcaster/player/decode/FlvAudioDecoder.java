@@ -123,6 +123,7 @@ public class FlvAudioDecoder implements Runnable {
 	 * 停止処理
 	 */
 	public void close() {
+		logger.info("つかわなくなったのでcloseします。");
 		// queueの中身をクリアします。
 		dataQueue.clear();
 		// threadの停止を促します。
@@ -230,22 +231,16 @@ public class FlvAudioDecoder implements Runnable {
 			logger.error("処理に失敗しました。", e);
 			e.printStackTrace();
 		}
-		System.out.println("停止処理やる。audio");
-		if(audioLine != null) {
-			System.out.println("audioLineしめ");
-			audioLine.close();
-			audioLine = null;
-		}
+		logger.info("停止処理を実行します。");
 		if(audioDecoder != null) {
-			System.out.println("audioDecoderしめ");
+			logger.info("audioDecoderとめる");
 			audioDecoder.close();
 			audioDecoder = null;
 		}
-		if(packet != null) {
-			packet.release();
-		}
-		if(samples != null) {
-			samples.release();
+		if(audioLine != null) {
+			logger.info("audioLineとめる");
+			audioLine.close();
+			audioLine = null;
 		}
 		samples = null;
 		vuLevel = 0;

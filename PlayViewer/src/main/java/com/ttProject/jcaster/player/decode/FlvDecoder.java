@@ -91,7 +91,7 @@ public class FlvDecoder {
 	public void addTag(Tag tag) {
 		if(!started) {
 			tagList.add(tag);
-			if(tagList.size() > 20) {
+			if(tag.getTimestamp() > 2000) {
 				started = true;
 				for(Tag t : tagList) {
 					addTag(t);

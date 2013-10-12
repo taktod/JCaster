@@ -159,19 +159,21 @@ public class FlvVideoDecoder implements Runnable {
 			logger.error("映像デコード処理で失敗しました。", e);
 			e.printStackTrace();
 		}
-		System.out.println("停止処理やる。video");
+		logger.info("停止処理を実行します。");
 		if(videoDecoder != null) {
-			System.out.println("デコーダーしめ");
+			logger.info("videoDecoder止める");
 			videoDecoder.close();
 			videoDecoder = null;
 		}
-		// TODO xuggleのオブジェクトはreleaseしておいた方がよさそうですね。メモリーの参照カウントが解放されないのかも・・・
-		if(packet != null) {
-			packet.release();
-		}
-		if(picture != null) {
-			picture.release();
-		}
+		// xuggleのオブジェクトはreleaseしておいた方がよさそうですね。メモリーの参照カウントが解放されないのかも・・・
+		// TODO むしろ勝手に解放しちゃだめ、xuggleが内部的にreleaseするっぽいです。
+		// 解放するとfinalyzerでエラーでる。
+//		if(packet != null) {
+//			packet.release();
+//		}
+//		if(picture != null) {
+//			picture.release();
+//		}
 		videoDataQueue.clear();
 	}
 	/**

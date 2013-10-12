@@ -31,7 +31,7 @@ public class PlayerTest {
 	/**
 	 * テスト
 	 */
-	@Test
+//	@Test
 	public void flvtest() throws Exception {
 		workingFlg = true;
 		TestFrame frame = new TestFrame();
@@ -71,7 +71,7 @@ public class PlayerTest {
 				startTime = System.currentTimeMillis();
 			}
 			// 転送していいデータの範囲を計算しておく。
-			long passedTime = System.currentTimeMillis() - startTime + 1000;
+			long passedTime = System.currentTimeMillis() - startTime + 100;
 			if(tag.getTimestamp() > passedTime) {
 				// 表示していい時間ではなければsleepでちょっと待たせる。
 				Thread.sleep(tag.getTimestamp() - passedTime);
@@ -84,7 +84,7 @@ public class PlayerTest {
 	/**
 	 * テスト
 	 */
-//	@Test
+	@Test
 	public void mp4test() throws Exception {
 //		Thread.sleep(10000);
 		workingFlg = true;
@@ -110,7 +110,7 @@ public class PlayerTest {
 		 * 
 		 * とりあえずいきなり本家でつくるとややこしいので、それぞれのクラスをつくってやっていこうと思う
 		 */
-		IFileReadChannel ch = FileReadChannel.openFileReadChannel("http://49.212.39.17/rtype.mp4");
+		IFileReadChannel ch = FileReadChannel.openFileReadChannel("http://49.212.39.17/mario.mp4");
 		File tmpFile = new TmpFile("/test.tmp");
 		System.out.println(tmpFile);
 		IndexFileCreator analyzer = new IndexFileCreator(tmpFile);
@@ -125,7 +125,7 @@ public class PlayerTest {
 		analyzer.close();
 
 		IFileReadChannel tmp = FileReadChannel.openFileReadChannel(tmpFile.getAbsolutePath());
-		FlvOrderModel orderModel = new FlvOrderModel(tmp, true, true, 1430000);
+		FlvOrderModel orderModel = new FlvOrderModel(tmp, true, true, 0);
 		FlvDecoder flvDecoder = new FlvDecoder();
 		frame.add(flvDecoder.getComponent());
 		List<Tag> tagList = null;
@@ -141,7 +141,7 @@ public class PlayerTest {
 					startTime = System.currentTimeMillis() - tag.getTimestamp();
 				}
 				// 転送していいデータの範囲を計算しておく。
-				long passedTime = System.currentTimeMillis() - startTime + 1000;
+				long passedTime = System.currentTimeMillis() - startTime + 10;
 				if(tag.getTimestamp() > passedTime) {
 					// 表示していい時間ではなければsleepでちょっと待たせる。
 					Thread.sleep(tag.getTimestamp() - passedTime);
