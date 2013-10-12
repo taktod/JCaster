@@ -46,9 +46,7 @@ public class PluginModel {
 				}
 			}
 			else if(path.endsWith(fileSeparator + "target" + fileSeparator + "classes")) {
-				System.out.println(path);
 				File file = new File(path.split(splitter + "target" + splitter + "classes")[0]);
-				System.out.println(file);
 				try {
 					Class<?> pluginClass = getEclipsePluginClass(new File(path), file.getName(), null);
 					if(pluginClass != null && IPlugin.class.isAssignableFrom(pluginClass)) {

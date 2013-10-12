@@ -131,7 +131,7 @@ public class EncodeMixerModule implements IMixerModule {
 	public synchronized void setData(Object mediaData) {
 		// TODO ここでデータを監視して、リセットされたときに元に戻す必要がありそうだ。timestampが大きくずれているときの処理
 		if(MediaUtil.getTimestamp(mediaData) == 0) {
-			System.out.println("timestamp = 0");
+			logger.info("timestamp = 0");
 			if(zeroReset) {
 				// リセットがはいったので、なんとかしておかないとだめ。
 				videoWorker.close();

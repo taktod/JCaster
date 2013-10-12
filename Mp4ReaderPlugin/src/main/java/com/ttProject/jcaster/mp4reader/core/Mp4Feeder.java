@@ -110,7 +110,7 @@ public class Mp4Feeder {
 		// metaデータがわからない場合はエラーを返しておく。
 		tmp = FileReadChannel.openFileReadChannel(tmpFile.toString());
 		int startTimestamp = (int)(startPos * 1000);
-		System.out.println("orderModelをつくりなおします:" + startTimestamp);
+		logger.info("orderModelをつくりなおします:" + startTimestamp);
 		orderModel = new FlvOrderModel(tmp, true, true, startTimestamp);
 		passedTimestamp = startTimestamp;
 		if(startTimestamp == 0) {
@@ -207,7 +207,6 @@ public class Mp4Feeder {
 		if(targetModule != null) {
 			targetModule.setData(tag);
 		}
-//		System.out.println("t:" + tag);
 	}
 	/**
 	 * 停止処理
