@@ -11,7 +11,6 @@ import com.ttProject.media.extra.flv.FlvOrderModel;
 import com.ttProject.media.extra.mp4.IndexFileCreator;
 import com.ttProject.media.extra.mp4.Meta;
 import com.ttProject.media.flv.Tag;
-import com.ttProject.media.flv.tag.MetaTag;
 import com.ttProject.media.mp4.Atom;
 import com.ttProject.media.mp4.atom.Moov;
 import com.ttProject.nio.channels.FileReadChannel;
@@ -111,7 +110,9 @@ public class Mp4Feeder {
 		// metaデータがわからない場合はエラーを返しておく。
 		tmp = FileReadChannel.openFileReadChannel(tmpFile.toString());
 		int startTimestamp = (int)(startPos * 1000);
+		System.out.println("orderModelをつくりなおします:" + startTimestamp);
 		orderModel = new FlvOrderModel(tmp, true, true, startTimestamp);
+		passedTimestamp = startTimestamp;
 		if(startTimestamp == 0) {
 			startTime = -1;
 		}
@@ -121,83 +122,92 @@ public class Mp4Feeder {
 	}
 	/**
 	 * タイマー処理上での動作
+	 * @return trueなら問題のない処理 falseなら問題がでて終わる処理
 	 */
 	public synchronized boolean onTimerEvent() {
 		// tagを取得してデータを応答する
 		// orderModelの中からデータを取り出していく。
 		// 現在の時刻から応答すべきflvTagのデータをさぐる。
 		if(source == null || orderModel == null || tmp == null) {
+			// データの準備ができていなければ処理しない
 			return false;
 		}
 		// データを取り出します。
 		// 自分が送りたいとおもった時刻以前である場合は、listにaddFirstしておわりにしておく。
 		// 開始時刻が設定されていない場合はそのまま保持しておく。
 		if(startTime < 0) {
+			// 初期時間が設定されていない場合は設定を実行する。
 			startTime += System.currentTimeMillis();
 		}
 		try {
+			// 経過時間について調査しておく。
 			long currentPos = System.currentTimeMillis() - startTime;
-			System.out.println(currentPos);
 			// 取得すべきtagのデータを保持する必要あり。
-			Tag lastTag = null;
-			while(true) {
-				// tagListに入っている最終データを確認して現在時刻より前だったら必要なデータを取りに行く。
-				if(tagList.size() != 0) {
-					lastTag = tagList.getLast();
-					// TODO １秒分だけ先に送信してOKということにしておきます。
-					if(lastTag.getTimestamp() > currentPos + 1000) {
-						break;
-					}
-				}
-				// 取得したtagListはいったんlistにいれる。
-				List<Tag> list = orderModel.nextTagList(source);
-				if(list == null) {
-					// 再生がおわっているので、その処理を実行する。
-					break;
-				}
-				// 取得したデータはいったん再生待ちリストにいれます。
-				for(Tag tag : list) {
-					tagList.addLast(tag);
-				}
-			}
-			System.out.println(lastTag);
-			// 先頭から確認していって、転送すべきデータを送っておく。
-			Tag tag = null;
-			while(tagList.size() != 0 && (tag = tagList.removeFirst()) != null) {
-				// metaTagは捨てておく
-				if(tag instanceof MetaTag) {
-					continue;
-				}
-				// mediaSequenceHeaderがある場合はそのデータをコピーしておく
-				// このtagデータは先頭にmediaSequenceHeaderとmetaTagがある。
-				// とりあえずtimestampの問題はoutputPluginでなんとかするので、必要なのは送信データのみ。
-				// mainBaseにデータを送信する。
-				// tagをみつけた場合はbaseにおくっておく。
-				passedTimestamp = tag.getTimestamp();
-				if(passedTimestamp > currentPos + 1000) {
-					break;
-				}
-				if(targetModule != null) {
-					if(startTimestamp == -1) {
-						startTimestamp = tag.getTimestamp() - 1;
-						tag.setTimestamp(0);
+			// まず前のデータが残っているか確認する必要がある。(tagListから取り出す)
+			if(tagList.size() != 0) {
+				// 前のデータが残っている場合はそっちから処理する。
+				Tag tag = null;
+				while(tagList.size() != 0 && (tag = tagList.removeFirst()) != null) {
+					// TODO ここの先行させるデータ量をふやすと、十分なcacheがplayerに送られるっぽいけど・・・
+					if(tag.getTimestamp() < currentPos + 1000) {
+						sendTarget(tag);
 					}
 					else {
-						tag.setTimestamp(tag.getTimestamp() - startTimestamp);
+						// 判定につかったtagはもどしておく。
+						tagList.addFirst(tag);
+						// この部分で抜けたということはデータがもうこれ以上必要ないので、処理はここでおわってもいいと思う
+						return true;
 					}
-					targetModule.setData(tag);
 				}
 			}
-			if(tagList.size() == 0 && lastTag == null) {
-				// tagListも空であたらしく取得できたデータもない場合はデータがない
-				return false;
+			// ここまできたら、前のデータは残っていないので次のデータを送る必要あり。
+			// 残っていない場合はorderModelからあたらしく取得する必要あり。
+			List<Tag> list = null;
+			while((list = orderModel.nextTagList(source)) != null) {
+				if(list.size() == 0) {
+					// データがとれていない場合は再送するのが正解っぽい。
+					continue;
+				}
+				for(Tag tag : list) {
+					if(tag.getTimestamp() < currentPos + 1000) {
+						sendTarget(tag);
+					}
+					else {
+						// tagListの追記すべきデータ
+						tagList.add(tag);
+					}
+				}
+				if(tagList.size() > 0) {
+					return true;
+				}
 			}
-			return true;
+			// データが枯渇したので、もうおわり。
+			return false;
 		}
 		catch (Exception e) {
 			logger.error("データやり取り上でエラーがありました。", e);
 		}
 		return false;
+	}
+	/**
+	 * targetModuleにタグデータを送ります。
+	 * @param tag
+	 */
+	private void sendTarget(Tag tag) {
+		// モジュールに送るべきデータ
+		passedTimestamp = tag.getTimestamp();
+		// timestampを変更する。
+		if(startTimestamp == -1) {
+			startTimestamp = tag.getTimestamp() - 1;
+			tag.setTimestamp(0);
+		}
+		else {
+			tag.setTimestamp(tag.getTimestamp() - startTimestamp);
+		}
+		if(targetModule != null) {
+			targetModule.setData(tag);
+		}
+//		System.out.println("t:" + tag);
 	}
 	/**
 	 * 停止処理
