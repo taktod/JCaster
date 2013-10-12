@@ -114,6 +114,7 @@ public class MainController extends Base implements ISwingMainBase, ActionListen
 	/**
 	 * 入力モジュール用の初期化処理
 	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void setupInputModule(JComboBox comboBox) {
 		logger.info("inputModule用のcomboboxを準備しておきます。");
 		for(IPlugin plugin : pluginModel.getPlugins()) {
