@@ -84,7 +84,7 @@ public class PlayerTest {
 	/**
 	 * テスト
 	 */
-	@Test
+//	@Test
 	public void mp4test() throws Exception {
 //		Thread.sleep(10000);
 		workingFlg = true;
@@ -123,7 +123,6 @@ public class PlayerTest {
 		analyzer.updatePrevTag();
 		analyzer.checkDataSize();
 		analyzer.close();
-
 		IFileReadChannel tmp = FileReadChannel.openFileReadChannel(tmpFile.getAbsolutePath());
 		FlvOrderModel orderModel = new FlvOrderModel(tmp, true, true, 0);
 		FlvDecoder flvDecoder = new FlvDecoder();
@@ -154,5 +153,90 @@ public class PlayerTest {
 		ch.close();
 		Thread.sleep(2000);
 		flvDecoder.onShutdown();
+	}
+	/**
+	 * テスト
+	 */
+	@Test
+	public void flvtest2() throws Exception {
+		workingFlg = true;
+		TestFrame frame = new TestFrame();
+		frame.setPreferredSize(new Dimension(640, 480));
+		frame.setSize(new Dimension(640, 480));
+		frame.setVisible(true);
+		frame.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent e) {
+				// ここに閉じるときのflagを折る動作を追加
+				workingFlg = false;
+			};
+		});
+		// flvデータを読み込んで動作させる。
+		/*
+		 * 基本的にFlvDecoderにデータを流す
+		 * そこから、AudioDecoderとVideoDecoderにデータが流れる。
+		 * Audioの再生を基本としつつ音声のタイミングに合わせて映像を動作させるという動作でいけばよさそう。
+		 * 映像のない再生は同じやり方でOK
+		 * 音声のない再生は別のやり方を考えないとだめ。
+		 * それぞれのthreadがそれぞれの動作をするようにする。
+		 * 
+		 * とりあえずいきなり本家でつくるとややこしいので、それぞれのクラスをつくってやっていこうと思う
+		 */
+		IFileReadChannel ch = FileReadChannel.openFileReadChannel("http://49.212.39.17/rtypeDelta.flv");
+		File tmpFile = new TmpFile("test.tmp");
+		com.ttProject.media.flv.model.IndexFileCreator indexFileCreator = new com.ttProject.media.flv.model.IndexFileCreator(tmpFile, ch);
+		indexFileCreator.initSetup();
+		IFileReadChannel tmp = FileReadChannel.openFileReadChannel(tmpFile.getAbsolutePath());
+		com.ttProject.media.flv.model.FlvOrderModel orderModel = new com.ttProject.media.flv.model.FlvOrderModel(indexFileCreator, true, true, 460000);
+		orderModel.initialize(ch);
+		FlvDecoder flvDecoder = new FlvDecoder();
+		frame.add(flvDecoder.getComponent());
+		List<Tag> tagList = null;
+		long startTime = -1;
+		while(workingFlg && (tagList = orderModel.nextTagList(ch)) != null) {
+			for(Tag tag : tagList) {
+				if(!workingFlg) {
+					break;
+				}
+				if(startTime == -1) {
+					startTime = System.currentTimeMillis() - tag.getTimestamp();
+				}
+				long passedTime = System.currentTimeMillis() - startTime + 10;
+				if(tag.getTimestamp() > passedTime) {
+					Thread.sleep(tag.getTimestamp() - passedTime);
+				}
+				flvDecoder.addTag(tag);
+			}
+		}
+		System.out.println("おわり。");
+		indexFileCreator.close(); // これは最後でもよい。
+		tmp.close();
+		ch.close();
+		Thread.sleep(2000);
+		flvDecoder.onShutdown();
+		/*
+		ITagAnalyzer analyzer = new TagAnalyzer();
+		FlvHeader header = new FlvHeader();
+		header.analyze(ch);
+		FlvDecoder flvDecoder = new FlvDecoder();
+		frame.add(flvDecoder.getComponent());
+		Tag tag = null;
+		long startTime = -1;
+		// tagのデータを現在時刻から、1秒先のものに限定しておく。
+		while(workingFlg && (tag = analyzer.analyze(ch)) != null) {
+			if(startTime == -1) {
+				// 現在時刻保持
+				startTime = System.currentTimeMillis();
+			}
+			// 転送していいデータの範囲を計算しておく。
+			long passedTime = System.currentTimeMillis() - startTime + 100;
+			if(tag.getTimestamp() > passedTime) {
+				// 表示していい時間ではなければsleepでちょっと待たせる。
+				Thread.sleep(tag.getTimestamp() - passedTime);
+			}
+			flvDecoder.addTag(tag);
+		}
+		Thread.sleep(2000);
+		flvDecoder.onShutdown();*/
 	}
 }
