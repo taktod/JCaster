@@ -63,7 +63,6 @@ public class PlayViewerModule implements IViewerModule, IOutputModule {
 		volumeSlider.addChangeListener(new ChangeListener() {
 			@Override
 			public void stateChanged(ChangeEvent e) {
-//				System.out.println("sliderChanged:" + volumeSlider.getValue());
 				// ここで変更を読み取る必要あるっぽい。
 				if(decoder != null) {
 					decoder.setVolume(volumeSlider.getValue());
@@ -83,8 +82,8 @@ public class PlayViewerModule implements IViewerModule, IOutputModule {
 	}
 //	@Override
 //	public void actionPerformed(ActionEvent e) {
-//		System.out.println(e);
-//		System.out.println(videoCheckBox.isSelected());
+//		logger.info("", e);
+//		logger.info(videoCheckBox.isSelected());
 //	}
 	public void setup(JPanel panel) {
 		logger.info("転送中のデータを表示するviewをセットアップします。");
@@ -142,7 +141,6 @@ public class PlayViewerModule implements IViewerModule, IOutputModule {
 	}
 	@Override
 	public void setMixedData(Tag tag) {
-//		System.out.println(tag);
 		if(tag == null) {
 			return;
 		}
@@ -192,12 +190,12 @@ public class PlayViewerModule implements IViewerModule, IOutputModule {
 			processPos = tag.getTimestamp();
 			// TODO このリセット処理は自信なし
 			if(lastVideoTimestamp != -1 && lastVideoTimestamp < savePos - 1000) {
-				System.out.println("映像リセットがはしります。:" + lastVideoTimestamp + " / " + savePos);
+				logger.info("映像リセットがはしります。:" + lastVideoTimestamp + " / " + savePos);
 				decoder.resetVideoDecoder();
 				lastVideoTimestamp = -1;
 			}
 			else if(lastAudioTimestamp != -1 && lastAudioTimestamp < savePos - 1000) {
-				System.out.println("音声リセットがはしります。:" + lastAudioTimestamp + " / " + savePos);
+				logger.info("音声リセットがはしります。:" + lastAudioTimestamp + " / " + savePos);
 				decoder.resetAudioDecoder();
 				// audioをリセットしたら再生位置は変更したい。(もしくは再生位置をずらした応答をaudioDecoderで実施したいところ。)
 				lastAudioTimestamp = -1;

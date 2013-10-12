@@ -2,21 +2,24 @@ package com.ttProject.jcaster.player.threadtest;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
+import org.apache.log4j.Logger;
+
 /**
  * 
  * @author taktod
  *
  */
 public class TakeTest {
+	private Logger logger = Logger.getLogger(TakeTest.class);
 //	@Test
 	public void test() throws Exception {
-		System.out.println("test start");
+		logger.info("test start");
 		final LinkedBlockingQueue<String> data = new LinkedBlockingQueue<String>();
 		Thread t = new Thread(new Runnable() {
 			@Override
 			public void run() {
 				try {
-					System.out.println(data.take());
+					logger.info(data.take());
 				}
 				catch(Exception e) {
 					e.printStackTrace();
@@ -24,10 +27,10 @@ public class TakeTest {
 			}
 		});
 		t.start();
-		System.out.println("try clear");
+		logger.info("try clear");
 		data.clear();
 		t.interrupt();
 		t.join();
-		System.out.println("test end");
+		logger.info("test end");
 	}
 }

@@ -6,6 +6,7 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.List;
 
+import org.apache.log4j.Logger;
 import org.junit.Test;
 
 import com.ttProject.jcaster.player.decode.FlvDecoder;
@@ -27,6 +28,7 @@ import com.ttProject.util.TmpFile;
  * @author taktod
  */
 public class PlayerTest {
+	private Logger logger = Logger.getLogger(PlayerTest.class);
 	private boolean workingFlg = true;
 	/**
 	 * テスト
@@ -112,7 +114,7 @@ public class PlayerTest {
 		 */
 		IFileReadChannel ch = FileReadChannel.openFileReadChannel("http://49.212.39.17/mario.mp4");
 		File tmpFile = new TmpFile("/test.tmp");
-		System.out.println(tmpFile);
+		logger.info(tmpFile);
 		IndexFileCreator analyzer = new IndexFileCreator(tmpFile);
 		Atom atom = null;
 		while((atom = analyzer.analyze(ch)) != null) {
@@ -208,7 +210,7 @@ public class PlayerTest {
 				flvDecoder.addTag(tag);
 			}
 		}
-		System.out.println("おわり。");
+		logger.info("おわり。");
 		indexFileCreator.close(); // これは最後でもよい。
 		tmp.close();
 		ch.close();

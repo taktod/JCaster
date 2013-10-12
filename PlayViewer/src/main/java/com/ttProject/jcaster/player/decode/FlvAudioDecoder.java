@@ -112,7 +112,7 @@ public class FlvAudioDecoder implements Runnable {
 		if(tag instanceof AudioTag) {
 			if(startTimestamp == -1) {
 				startTimestamp = tag.getTimestamp();
-				System.out.println("決定したstartTimestamp:" + startTimestamp);
+				logger.info("決定したstartTimestamp:" + startTimestamp);
 			}
 			synchronized(dataQueue) {
 				dataQueue.add((AudioTag)tag);
@@ -154,7 +154,7 @@ public class FlvAudioDecoder implements Runnable {
 					continue;
 				}
 				// ここですでに再生にまわしたtimestampと実際のtagのtimestampの差分値がわかります。
-//				System.out.println(tag.getTimestamp() - passedSampleCount / 44.1F);
+//				logger.info(tag.getTimestamp() - passedSampleCount / 44.1F);
 				IPacket packet = packetizer.getPacket(tag, this.packet);
 				if(packet == null) {
 					continue;
@@ -188,7 +188,7 @@ public class FlvAudioDecoder implements Runnable {
 									resampler.getInputChannels() != samples.getChannels() ||
 									resampler.getInputFormat() != samples.getFormat() ||
 									resampler.getInputRate() != samples.getSampleRate()) {
-								System.out.println("リサンプラを作り直す必要あり。");
+								logger.info("リサンプラを作り直す必要あり。");
 								resampler = IAudioResampler.make(audioFormat.getChannels(), samples.getChannels(),
 										(int)audioFormat.getSampleRate(), samples.getSampleRate());
 							}
@@ -217,7 +217,7 @@ public class FlvAudioDecoder implements Runnable {
 						if(audioLine != null) {
 							audioLine.write(BufferUtil.toByteArray(volumedBuffer), 0, samples.getSize());
 							if(!isAudioLineReady) {
-								System.out.println("音声データ注入しました");
+								logger.info("音声データ注入しました");
 							}
 							
 							isAudioLineReady = true;

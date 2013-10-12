@@ -1,5 +1,7 @@
 package com.ttProject.jcaster.player.threadtest;
 
+import org.apache.log4j.Logger;
+
 import com.xuggle.ferry.JNIEnv;
 
 /**
@@ -9,13 +11,13 @@ import com.xuggle.ferry.JNIEnv;
  * パスがうまく取得できずに、ライブラリ読み込みエラーになりました。
  */
 public class LoadTest {
-	
+	private Logger logger = Logger.getLogger(LoadTest.class);
 //	@Test
 	public void test() {
 		System.setProperty("os.arch", "x86");
-		System.out.println(System.getProperty("os.arch"));
+		logger.info(System.getProperty("os.arch"));
 		JNIEnv env = JNIEnv.getEnv();
-		System.out.println(env.getCPUArch());
-		System.out.println(env.getOSFamily());
+		logger.info(env.getCPUArch());
+		logger.info(env.getOSFamily());
 	}
 }

@@ -2,6 +2,7 @@ package com.ttProject.jcaster.mp4plugin.test;
 
 import java.util.LinkedList;
 
+import org.apache.log4j.Logger;
 import org.junit.Test;
 
 /**
@@ -9,18 +10,19 @@ import org.junit.Test;
  * @author taktod
  */
 public class ListTest {
+	private Logger logger = Logger.getLogger(ListTest.class);
 	@Test
 	public void test() {
 		LinkedList<String> list = new LinkedList<String>();
-		System.out.println(list);
+		logger.info(list);
 		list.addLast("a");
-		System.out.println(list);
+		logger.info(list);
 		list.addLast("b");
-		System.out.println(list);
+		logger.info(list);
 		list.addLast("c");
-		System.out.println(list);
-		System.out.println(list.pop());
-		System.out.println(list.pop());
-		System.out.println(list);
+		logger.info(list);
+		logger.info(list.pop());
+		logger.info(list.pop());
+		logger.info(list);
 	}
 }

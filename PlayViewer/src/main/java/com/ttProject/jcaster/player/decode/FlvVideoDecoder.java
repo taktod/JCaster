@@ -124,7 +124,7 @@ public class FlvVideoDecoder implements Runnable {
 					int bytesDecoded = 0;
 					bytesDecoded = videoDecoder.decodeVideo(picture, packet, offset);
 					if(bytesDecoded < 0) {
-						System.out.println("デコード中に問題発生。");
+						logger.info("デコード中に問題発生。");
 //						throw new Exception("映像のデコード中に問題が発生しました。");
 						break;
 					}
@@ -134,7 +134,7 @@ public class FlvVideoDecoder implements Runnable {
 						// フレームのスキップを実装しておかないと、処理の重いフレームにあたるとアウトになる。
 						long timestamp = audioDecoder.getTimestamp();
 						if(tag.getTimestamp() < timestamp) {
-							System.out.println("時間がかかりすぎているので、スキップする。");
+							logger.info("時間がかかりすぎているので、スキップする。");
 							continue;
 						}
 //						long startTime = System.currentTimeMillis();
@@ -199,16 +199,16 @@ public class FlvVideoDecoder implements Runnable {
 			if(timestamp != -1 && vData.getTimestamp() > timestamp) {
 				if(dataQueue.size() == 0) {
 					if(videoData != null) {
-//						System.out.print("target Timestamp:" + timestamp);
-//						System.out.println(" avideo timestamp:" + videoData.getTimestamp());
+//						logger.info("target Timestamp:" + timestamp);
+//						logger.info(" avideo timestamp:" + videoData.getTimestamp());
 						component.setImage(videoData.getImage());
 						videoData = null;
 					}
 					// データqueueが存在していない場合は、次のtimestampまで待ってデータを吐いてもいいと思う。
 					try {
-//						System.out.println("try sleep");
+//						logger.info("try sleep");
 						long sleepLength = vData.getTimestamp() - audioDecoder.getTimestamp();
-//						System.out.println("sleepLength:" + sleepLength);
+//						logger.info("sleepLength:" + sleepLength);
 						Thread.sleep(sleepLength);
 						if(vData.getTimestamp() < audioDecoder.getTimestamp()) {
 							videoData = videoDataQueue.removeFirst();
@@ -223,11 +223,11 @@ public class FlvVideoDecoder implements Runnable {
 			videoData = videoDataQueue.removeFirst();
 		}
 		if(videoData != null) {
-//			System.out.println(" bvideo timestamp:" + videoData.getTimestamp());
+//			logger.info(" bvideo timestamp:" + videoData.getTimestamp());
 			component.setImage(videoData.getImage());
 		}
 		else {
-//			System.out.println(" none");
+//			logger.info(" none");
 		}
 	}
 	public void onShutdown() {
